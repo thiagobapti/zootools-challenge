@@ -1,2 +1,1 @@
-# zootools-challenge
-Hiring challenge for ZooTools engineering role
+# init local repo
