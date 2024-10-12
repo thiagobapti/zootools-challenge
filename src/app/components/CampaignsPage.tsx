@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import MainHeader from "./MainHeader";
 import * as Tabs from "@radix-ui/react-tabs";
+import EmailEditor from "./EmailEditor";
 
 const Root = styled.div`
   width: 100%;
@@ -24,11 +24,14 @@ const Container = styled.div`
   flex: 1;
 `;
 
-const Content = styled.div`
+const EditorWrapper = styled.div`
   width: 100%;
   flex: 1;
   background-color: #fff;
   height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
 `;
 
 const SideListHeader = styled.div`
@@ -85,7 +88,6 @@ const TabTrigger = styled(Tabs.Trigger)`
   border: none;
   font-size: 16px;
   font-weight: 600;
-  // margin-left: 20px;
   color: #b0b0b0;
   position: relative;
 
@@ -111,6 +113,18 @@ const TabTrigger = styled(Tabs.Trigger)`
     background-position: center;
     background-size: contain;
   }
+`;
+
+const EditorTabContent = styled(Tabs.Content)`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
+
+const TabsRoot = styled(Tabs.Root)`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 `;
 
 type Campaign = {
@@ -158,11 +172,9 @@ const CampaignsPage: React.FC = () => {
         </CampaignList>
       </SideList>
       <Container>
-        {/* <MainHeader /> */}
-
-        <Tabs.Root defaultValue="write">
-          <StyledMainHeader>
-            {campaign && (
+        {campaign && (
+          <TabsRoot defaultValue="write">
+            <StyledMainHeader>
               <TabsList>
                 <TabTrigger value="write">1. Write</TabTrigger>
                 <TabTrigger value="send" disabled>
@@ -172,15 +184,17 @@ const CampaignsPage: React.FC = () => {
                   3. Analyze
                 </TabTrigger>
               </TabsList>
-            )}
-          </StyledMainHeader>
+            </StyledMainHeader>
 
-          <Tabs.Content value="write">
-            <Content>{campaign && ""}</Content>
-          </Tabs.Content>
-          <Tabs.Content value="send">Send</Tabs.Content>
-          <Tabs.Content value="analyze">Analyze</Tabs.Content>
-        </Tabs.Root>
+            <EditorTabContent value="write">
+              <EditorWrapper>
+                <EmailEditor />
+              </EditorWrapper>
+            </EditorTabContent>
+            <Tabs.Content value="send">Send</Tabs.Content>
+            <Tabs.Content value="analyze">Analyze</Tabs.Content>
+          </TabsRoot>
+        )}
       </Container>
     </Root>
   );

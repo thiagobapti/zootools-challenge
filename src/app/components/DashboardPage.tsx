@@ -1,6 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-import MainHeader from "./MainHeader";
 
 const StyledContainer = styled.div`
   height: 100vh;
@@ -19,7 +18,6 @@ const StyledContent = styled.div`
 const DashboardPage: React.FC = () => {
   return (
     <StyledContainer>
-      <MainHeader />
       <StyledContent>DashboardPage</StyledContent>
     </StyledContainer>
   );
