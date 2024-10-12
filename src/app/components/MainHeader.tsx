@@ -1,3 +1,4 @@
+import * as Tabs from "@radix-ui/react-tabs";
 import React from "react";
 import styled from "styled-components";
 
@@ -8,7 +9,7 @@ const StyledMainHeader = styled.div`
 `;
 
 const MainHeader: React.FC = () => {
-  return <StyledMainHeader>Header</StyledMainHeader>;
+  return <StyledMainHeader></StyledMainHeader>;
 };
 
 export default MainHeader;

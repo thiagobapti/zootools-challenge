@@ -8,6 +8,7 @@ import zooToolsLogoMinSvg from "../images/zootools-logo-min.svg";
 import zooToolsLogoNameSvg from "../images/zootools-logo-name.svg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faChartSimple,
   faChevronRight,
   faEnvelope,
   faHouse,
@@ -18,7 +19,7 @@ const StyledRoot = styled.div`
   display: flex;
   flex-direction: column;
   padding: 16px 22px;
-  border-right: 1px solid #848484;
+  border-right: 1px solid #d7d7d7;
   position: relative;
 `;
 
@@ -87,10 +88,10 @@ const StyledToggleButton = styled.button`
   border-radius: 50%;
   position: absolute;
   right: -10px;
-  top: 30px;
+  top: 26px;
   width: 18px;
   height: 18px;
-  border: 1px solid #454545;
+  border: 1px solid #d7d7d7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -100,7 +101,7 @@ const StyledToggleIcon = styled(FontAwesomeIcon)<{ open: boolean }>`
   width: 8px;
   height: 8px;
   transform: ${(props) => (props.open ? "rotate(180deg)" : "rotate(0)")};
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease 0.3s;
   color: #454545;
 `;
 
@@ -159,7 +160,11 @@ const MainSideBar: React.FC = () => {
       <CollapsibleContent open={open}>
         <Link href="/" passHref onClick={handleLinkClick}>
           <SidebarButton active={pathname === "/"} open={open}>
-            <SidebarIcon icon={faHouse} active={pathname === "/"} open={open} />
+            <SidebarIcon
+              icon={faChartSimple}
+              active={pathname === "/"}
+              open={open}
+            />
             {open && "Dashboard"}
           </SidebarButton>
         </Link>
