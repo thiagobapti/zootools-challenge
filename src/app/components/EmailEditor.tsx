@@ -55,6 +55,8 @@ const RecipientLabel = styled.span`
 const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  // const editor = useCreateBlockNote();
+
   const handleRecipientsSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setRecipientsPopoverOpen(e.target.value.length > 0);
@@ -79,9 +81,12 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
       <Message>
         <Recipients>
           <RecipientLabel>To:</RecipientLabel>
-          {/* {recipientsData.map((recipient) => (
-            <RecipientPill recipient={recipient} key={recipient.id} />
-          ))} */}
+          {contactGroups.map((contactGroup) => (
+            <RecipientPill recipient={contactGroup} key={contactGroup.id} />
+          ))}
+          {contacts.map((contact) => (
+            <RecipientPill recipient={contact} key={contact.id} />
+          ))}
           <input type="text" onChange={handleRecipientsSearch} />
 
           <Popover.Root open={recipientsPopoverOpen}>

@@ -32,10 +32,8 @@ const SidebarLogoName = styled(Image)`
   margin-left: 12px;
 `;
 
-const SidebarButton = styled.button.withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
-})<{ active?: boolean; open: boolean }>`
-  width: ${(props) => (props.open ? "200px" : "40px")};
+const SidebarButton = styled.button<{ $active?: boolean; $open: boolean }>`
+  width: ${(props) => (props.$open ? "200px" : "40px")};
   border: none;
   margin-bottom: 6px;
   height: 36px;
@@ -44,37 +42,35 @@ const SidebarButton = styled.button.withConfig({
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: ${(props) => (props.open ? "flex-start" : "center")};
-  padding-left: ${(props) => (props.open ? "14px" : "0")};
-  background-color: ${(props) => (props.active ? "#a121d3" : "#efefef")};
-  color: ${(props) => (props.active ? "#fff" : "#454545")};
+  justify-content: ${(props) => (props.$open ? "flex-start" : "center")};
+  padding-left: ${(props) => (props.$open ? "14px" : "0")};
+  background-color: ${(props) => (props.$active ? "#a121d3" : "#efefef")};
+  color: ${(props) => (props.$active ? "#fff" : "#454545")};
   cursor: pointer;
   overflow: hidden;
 `;
 
 const CollapsibleContent = styled.div<{
-  open: boolean;
-  animatedSidebar: boolean;
+  $open: boolean;
+  $animatedSidebar: boolean;
 }>`
-  width: ${(props) => (props.open ? "200px" : "40px")};
+  width: ${(props) => (props.$open ? "200px" : "40px")};
   overflow: hidden;
-  transition: width ${(props) => (props.animatedSidebar ? "0.3s ease" : "0")};
+  transition: width ${(props) => (props.$animatedSidebar ? "0.3s ease" : "0")};
   white-space: nowrap;
   display: flex;
   flex-direction: column;
   margin-top: 32px;
 `;
 
-const SidebarIcon = styled(FontAwesomeIcon).withConfig({
-  shouldForwardProp: (prop) => prop !== "active",
-})<{
-  active?: boolean;
-  open: boolean;
+const SidebarIcon = styled(FontAwesomeIcon)<{
+  $active?: boolean;
+  $open: boolean;
 }>`
-  margin-right: ${(props) => (props.open ? "10px" : "0")};
+  margin-right: ${(props) => (props.$open ? "10px" : "0")};
   width: 18px;
   height: 18px;
-  color: ${(props) => (props.active ? "#fff" : "#454545")};
+  color: ${(props) => (props.$active ? "#fff" : "#454545")};
 `;
 
 const LogoWrapper = styled.div`
@@ -185,23 +181,23 @@ const MainSideBar: React.FC = () => {
           />
         )}
       </LogoWrapper>
-      <CollapsibleContent open={open} animatedSidebar={animatedSidebar}>
+      <CollapsibleContent $open={open} $animatedSidebar={animatedSidebar}>
         <Link href="/" passHref onClick={handleLinkClick}>
-          <SidebarButton active={pathname === "/"} open={open}>
+          <SidebarButton $active={pathname === "/"} $open={open}>
             <SidebarIcon
               icon={faChartSimple}
-              active={pathname === "/"}
-              open={open}
+              $active={pathname === "/"}
+              $open={open}
             />
             {open && "Dashboard"}
           </SidebarButton>
         </Link>
         <Link href="/campaigns" passHref onClick={handleLinkClick}>
-          <SidebarButton active={pathname === "/campaigns"} open={open}>
+          <SidebarButton $active={pathname === "/campaigns"} $open={open}>
             <SidebarIcon
               icon={faEnvelope}
-              active={pathname === "/campaigns"}
-              open={open}
+              $active={pathname === "/campaigns"}
+              $open={open}
             />
             {open && "Campaigns"}
           </SidebarButton>
