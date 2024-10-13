@@ -4,7 +4,7 @@ import React from "react";
 import styled from "styled-components";
 import { Contact, ContactGroup } from "../types/general";
 
-const Root = styled.div<{ $themeColor?: string }>`
+const Root = styled.button<{ $themeColor?: string }>`
   border: 1px solid
     ${(props) =>
       props.$themeColor ? `rgba(${props.$themeColor}, 0.3)` : "#e4e4e7"};
@@ -24,6 +24,10 @@ const Root = styled.div<{ $themeColor?: string }>`
 rgba(${props.$themeColor}, 0.05) 0%, 
       rgba(${props.$themeColor}, 0.1) 100%)`
       : "white"};
+
+  &[data-selected="true"] {
+    text-decoration: underline;
+  }
 `;
 
 const AvatarWrapper = styled.div`
@@ -51,9 +55,10 @@ const TagIcon = styled.div<{ $themeColor?: string }>`
       )`};
 `;
 
-const RecipientPill: React.FC<{ recipient: Contact | ContactGroup }> = ({
-  recipient,
-}) => {
+const RecipientPill: React.FC<{
+  recipient: Contact | ContactGroup;
+  selected: boolean;
+}> = ({ recipient, selected }) => {
   const isContactGroup = (
     recipient: Contact | ContactGroup
   ): recipient is ContactGroup => {
@@ -62,6 +67,7 @@ const RecipientPill: React.FC<{ recipient: Contact | ContactGroup }> = ({
 
   return (
     <Root
+      data-selected={selected}
       $themeColor={isContactGroup(recipient) ? recipient.themeColor : undefined}
     >
       {isContactGroup(recipient) ? (

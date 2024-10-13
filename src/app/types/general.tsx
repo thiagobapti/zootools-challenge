@@ -20,6 +20,7 @@ type ContactGroup = {
 };
 
 type ThemeColor = {
+  grey: string;
   orange: string;
   red: string;
   green: string;
@@ -27,4 +28,15 @@ type ThemeColor = {
   blue: string;
 };
 
-export type { Campaign, Contact, ContactGroup, ThemeColor };
+type SelectableRecipient = {
+  selected: boolean;
+  recipient: Contact | ContactGroup;
+};
+
+export type {
+  Campaign,
+  Contact,
+  ContactGroup,
+  SelectableRecipient,
+  ThemeColor,
+};

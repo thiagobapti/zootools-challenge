@@ -14,6 +14,7 @@ const contacts: Contact[] = [
 ];
 
 const themeColors: ThemeColor = {
+  grey: "0, 0, 0",
   orange: "249, 115, 22",
   red: "225, 29, 72",
   green: "132, 204, 22",
@@ -22,6 +23,7 @@ const themeColors: ThemeColor = {
 };
 
 const contactGroups: ContactGroup[] = [
+  { id: "0", label: "All contacts", themeColor: themeColors.grey },
   { id: "1", label: "US customers", themeColor: themeColors.orange },
   { id: "2", label: "Europe customers", themeColor: themeColors.red },
   { id: "3", label: "Asia customers", themeColor: themeColors.green },

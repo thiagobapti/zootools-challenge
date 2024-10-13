@@ -1,10 +1,15 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
 import { contactGroups, contacts } from "../data/database";
-import { ContactGroup, Contact, Campaign } from "../types/general";
+import {
+  ContactGroup,
+  Contact,
+  Campaign,
+  SelectableRecipient,
+} from "../types/general";
 
 const Root = styled.div`
   flex: 1;
@@ -52,14 +57,38 @@ const RecipientLabel = styled.span`
   font-size: 14px;
 `;
 
+const PopoverContent = styled(Popover.Content)`
+  background: #f1f1f1;
+  border: 1px solid #d7d7d7;
+  border-radius: 12px;
+  padding: 12px;
+`;
+
 const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectableContacts, setSelectableContacts] = useState<
+    SelectableRecipient[]
+  >([]);
+  const [selectableContactGroups, setSelectableContactGroups] = useState<
+    SelectableRecipient[]
+  >([]);
+
+  useEffect(() => {
+    setSelectableContacts(
+      contacts.map((contact) => ({ selected: false, recipient: contact }))
+    );
+    setSelectableContactGroups(
+      contactGroups.map((contactGroup) => ({
+        selected: false,
+        recipient: contactGroup,
+      }))
+    );
+  }, []);
   // const editor = useCreateBlockNote();
 
   const handleRecipientsSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setRecipientsPopoverOpen(e.target.value.length > 0);
       setSearchTerm(e.target.value);
     },
     []
@@ -67,12 +96,120 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
 
   const handleInputBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
-      // Check if the related target (the element that receives focus) is within the popover
       if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
         setRecipientsPopoverOpen(false);
       }
     },
     []
+  );
+
+  useEffect(() => {
+    const filteredContactGroups = contactGroups.filter(
+      (contactGroup: ContactGroup) =>
+        contactGroup.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const filteredContacts = contacts.filter((contact: Contact) =>
+      contact.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setSelectableContactGroups(
+      filteredContactGroups.map((group, index) => ({
+        selected: index === 0,
+        recipient: group,
+      }))
+    );
+
+    if (filteredContactGroups.length === 0) {
+      setSelectableContacts(
+        filteredContacts.map((contact, index) => ({
+          selected: index === 0,
+          recipient: contact,
+        }))
+      );
+    } else {
+      setSelectableContacts(
+        filteredContacts.map((contact) => ({
+          selected: false,
+          recipient: contact,
+        }))
+      );
+    }
+  }, [searchTerm]);
+
+  const handleInputFocus = useCallback(() => {
+    setSelectableContactGroups((prevGroups) =>
+      prevGroups.map((group, index) => ({
+        ...group,
+        selected: index === 0,
+      }))
+    );
+    setRecipientsPopoverOpen(true);
+  }, []);
+
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const isArrowDown = e.key === "ArrowDown";
+        const currentGroupIndex = selectableContactGroups.findIndex(
+          (r) => r.selected
+        );
+        const currentContactIndex = selectableContacts.findIndex(
+          (r) => r.selected
+        );
+
+        if (currentGroupIndex !== -1) {
+          setSelectableContactGroups((prevGroups) => {
+            const updatedGroups = [...prevGroups];
+            updatedGroups[currentGroupIndex].selected = false;
+            const nextIndex = isArrowDown
+              ? currentGroupIndex + 1
+              : currentGroupIndex - 1;
+            if (nextIndex >= 0 && nextIndex < prevGroups.length) {
+              updatedGroups[nextIndex].selected = true;
+            } else if (isArrowDown) {
+              setSelectableContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+                updatedContacts[0].selected = true;
+                return updatedContacts;
+              });
+            } else {
+              setSelectableContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+                updatedContacts[prevContacts.length - 1].selected = true;
+                return updatedContacts;
+              });
+            }
+            return updatedGroups;
+          });
+        } else if (currentContactIndex !== -1) {
+          setSelectableContacts((prevContacts) => {
+            const updatedContacts = [...prevContacts];
+            updatedContacts[currentContactIndex].selected = false;
+            const nextIndex = isArrowDown
+              ? currentContactIndex + 1
+              : currentContactIndex - 1;
+            if (nextIndex >= 0 && nextIndex < prevContacts.length) {
+              updatedContacts[nextIndex].selected = true;
+            } else if (isArrowDown) {
+              setSelectableContactGroups((prevGroups) => {
+                const updatedGroups = [...prevGroups];
+                updatedGroups[0].selected = true;
+                return updatedGroups;
+              });
+            } else {
+              setSelectableContactGroups((prevGroups) => {
+                const updatedGroups = [...prevGroups];
+                updatedGroups[prevGroups.length - 1].selected = true;
+                return updatedGroups;
+              });
+            }
+            return updatedContacts;
+          });
+        }
+      }
+    },
+    [selectableContactGroups, selectableContacts]
   );
 
   return (
@@ -81,53 +218,49 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
       <Message>
         <Recipients>
           <RecipientLabel>To:</RecipientLabel>
-          {contactGroups.map((contactGroup) => (
+          {/* {contactGroups.map((contactGroup) => (
             <RecipientPill recipient={contactGroup} key={contactGroup.id} />
           ))}
           {contacts.map((contact) => (
             <RecipientPill recipient={contact} key={contact.id} />
-          ))}
-          <input type="text" onChange={handleRecipientsSearch} />
+          ))} */}
+          <input
+            type="text"
+            onChange={handleRecipientsSearch}
+            onFocus={handleInputFocus}
+            onKeyDown={handleInputKeyDown}
+          />
 
           <Popover.Root open={recipientsPopoverOpen}>
             <Popover.Anchor />
             <Popover.Portal>
-              <Popover.Content
+              <PopoverContent
                 onBlur={handleInputBlur}
                 onOpenAutoFocus={(e) => e.preventDefault()}
               >
-                All contacts (10)
-                <br />
-                Tags (3)
-                <br />
-                {contactGroups
-                  .filter((contactGroup: ContactGroup) =>
-                    contactGroup.label
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase())
-                  )
-                  .map((contactGroup: ContactGroup) => (
+                Tags ({selectableContactGroups.length})
+                {selectableContactGroups.map(
+                  (contactGroup: SelectableRecipient) => (
                     <RecipientPill
-                      recipient={contactGroup}
-                      key={`contact-group-${contactGroup.id}`}
+                      recipient={contactGroup.recipient as ContactGroup}
+                      selected={contactGroup.selected}
+                      key={`contact-group-${
+                        (contactGroup.recipient as ContactGroup).id
+                      }`}
                     />
-                  ))}
-                Individuals:
-                {contacts
-                  .filter((contact: Contact) =>
-                    contact.name
-                      .toLowerCase()
-                      .includes(searchTerm.toLowerCase())
                   )
-                  .map((contact: Contact) => (
-                    <RecipientPill
-                      recipient={contact}
-                      key={`contact-${contact.id}`}
-                    />
-                  ))}
+                )}
+                Individuals ({selectableContacts.length})
+                {selectableContacts.map((contact: SelectableRecipient) => (
+                  <RecipientPill
+                    recipient={contact.recipient as Contact}
+                    selected={contact.selected}
+                    key={`contact-${(contact.recipient as Contact).id}`}
+                  />
+                ))}
                 {/* <Popover.Close /> */}
                 {/* <Popover.Arrow /> */}
-              </Popover.Content>
+              </PopoverContent>
             </Popover.Portal>
           </Popover.Root>
         </Recipients>
