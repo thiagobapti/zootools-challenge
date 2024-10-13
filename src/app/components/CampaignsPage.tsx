@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import * as Tabs from "@radix-ui/react-tabs";
 import EmailEditor from "./EmailEditor";
+import { Campaign } from "../types/general";
 
 const Root = styled.div`
   width: 100%;
@@ -127,14 +128,6 @@ const TabsRoot = styled(Tabs.Root)`
   flex-direction: column;
 `;
 
-type Campaign = {
-  id: string;
-  subject: string;
-  status: "draft" | "scheduled" | "sent";
-  createdAt: string;
-  body: string;
-};
-
 const CampaignsPage: React.FC = () => {
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
   const [campaign, setCampaign] = React.useState<Campaign | null>(null);
@@ -146,6 +139,7 @@ const CampaignsPage: React.FC = () => {
       status: "draft",
       createdAt: new Date().toISOString(),
       body: "",
+      recipients: [],
     });
   };
 
@@ -188,7 +182,7 @@ const CampaignsPage: React.FC = () => {
 
             <EditorTabContent value="write">
               <EditorWrapper>
-                <EmailEditor />
+                <EmailEditor campaign={campaign} />
               </EditorWrapper>
             </EditorTabContent>
             <Tabs.Content value="send">Send</Tabs.Content>

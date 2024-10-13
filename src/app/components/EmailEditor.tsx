@@ -1,28 +1,10 @@
 import * as Tabs from "@radix-ui/react-tabs";
-import React from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
-
-const recipientsData = [
-  { id: "1", type: "individual", name: "Thiago", email: "thiago@example.com" },
-  { id: "2", type: "individual", name: "Jorge", email: "jorge@example.com" },
-  { id: "3", type: "individual", name: "Thiago", email: "thiago@example.com" },
-  { id: "4", type: "individual", name: "Jorge", email: "jorge@example.com" },
-  { id: "5", type: "individual", name: "Thiago", email: "thiago@example.com" },
-  { id: "6", type: "individual", name: "Jorge", email: "jorge@example.com" },
-  { id: "7", type: "individual", name: "Thiago", email: "thiago@example.com" },
-  { id: "8", type: "individual", name: "Jorge", email: "jorge@example.com" },
-  { id: "9", type: "individual", name: "Thiago", email: "thiago@example.com" },
-  { id: "10", type: "individual", name: "Jorge", email: "jorge@example.com" },
-  { id: "11", type: "tag", name: "US customers", themeColor: "249, 115, 22" },
-  {
-    id: "12",
-    type: "tag",
-    name: "Europe customers",
-    themeColor: "225, 29, 72",
-  },
-  { id: "13", type: "tag", name: "Asia customers", themeColor: "132, 204, 22" },
-];
+import * as Popover from "@radix-ui/react-popover";
+import { groups, contacts } from "../data/database";
+import { ContactGroup, Contact, Campaign } from "../types/general";
 
 const Root = styled.div`
   flex: 1;
@@ -50,6 +32,7 @@ const Recipients = styled.div`
   border: 1px solid #d7d7d7;
   display: inline-flex;
   flex-wrap: wrap;
+  align-items: flex-end;
 `;
 
 const Subject = styled.div`
@@ -63,15 +46,78 @@ const Editor = styled.div`
   flex: 1;
 `;
 
-const EmailEditor: React.FC = () => {
+const RecipientLabel = styled.span`
+  font-weight: 600;
+  margin-right: 4px;
+  font-size: 14px;
+`;
+
+const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
+  const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleRecipientsSearch = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setRecipientsPopoverOpen(e.target.value.length > 0);
+      setSearchTerm(e.target.value);
+    },
+    []
+  );
+
+  const handleInputBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      // Check if the related target (the element that receives focus) is within the popover
+      if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+        setRecipientsPopoverOpen(false);
+      }
+    },
+    []
+  );
+
   return (
     <Root>
       <Header>New Message</Header>
       <Message>
         <Recipients>
-          {recipientsData.map((recipient) => (
+          <RecipientLabel>To:</RecipientLabel>
+          {/* {recipientsData.map((recipient) => (
             <RecipientPill recipient={recipient} key={recipient.id} />
-          ))}
+          ))} */}
+          <input type="text" onChange={handleRecipientsSearch} />
+          <Popover.Root open={recipientsPopoverOpen}>
+            <Popover.Anchor />
+            <Popover.Portal>
+              <Popover.Content
+                onBlur={handleInputBlur}
+                onOpenAutoFocus={(e) => e.preventDefault()}
+              >
+                All contacts (10)
+                <br />
+                Tags (3)
+                <br />
+                {/* {recipientsData
+                  .filter((recipient) =>
+                    recipient.name
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                  )
+                  .map((recipient) => (
+                    <RecipientPill recipient={recipient} key={recipient.id} />
+                  ))} */}
+                Individuals:
+                {/* {recipientsData
+                  .filter((recipient) =>
+                    recipient.name
+                      .toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                  )
+                  .map((recipient) => (
+                    <RecipientPill recipient={recipient} key={recipient.id} />
+                  ))} */}
+                {/* <Popover.Close /> */}
+                {/* <Popover.Arrow /> */}
+              </Popover.Content>
+            </Popover.Portal>
+          </Popover.Root>
         </Recipients>
         <Subject>Subject</Subject>
         <Editor>Editor</Editor>
