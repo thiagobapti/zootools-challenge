@@ -4,6 +4,7 @@ import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
 import { contactGroups, contacts } from "../data/database";
+import * as Separator from "@radix-ui/react-separator";
 import {
   ContactGroup,
   Contact,
@@ -60,11 +61,20 @@ const RecipientLabel = styled.span`
 const PopoverContent = styled(Popover.Content)`
   background: #f1f1f1;
   border: 1px solid #d7d7d7;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 8px;
+  padding: 12px 6px;
 `;
 
-const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
+const RecipientPopoverLabel = styled.div`
+  font-weight: 600;
+  font-size: 12px;
+`;
+
+const EmailEditor: React.FC<{
+  currentCampaign: Campaign;
+  onCampaignUpdate: (updatedCampaign: Campaign) => void;
+}> = ({ currentCampaign, onCampaignUpdate }) => {
+  const [campaign, setCampaign] = useState<Campaign>();
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectableContacts, setSelectableContacts] = useState<
@@ -73,6 +83,10 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
   const [selectableContactGroups, setSelectableContactGroups] = useState<
     SelectableRecipient[]
   >([]);
+
+  useEffect(() => {
+    setCampaign(currentCampaign);
+  }, [currentCampaign]);
 
   useEffect(() => {
     setSelectableContacts(
@@ -90,6 +104,7 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
   const handleRecipientsSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchTerm(e.target.value);
+      setRecipientsPopoverOpen(true);
     },
     []
   );
@@ -143,14 +158,26 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
         selected: index === 0,
       }))
     );
+    setSelectableContacts((prevContacts) =>
+      prevContacts.map((contact) => ({
+        ...contact,
+        selected: false,
+      }))
+    );
     setRecipientsPopoverOpen(true);
   }, []);
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      if (
+        e.key === "ArrowDown" ||
+        e.key === "ArrowUp" ||
+        e.key === "Tab" ||
+        (e.key === "Tab" && e.shiftKey)
+      ) {
         e.preventDefault();
-        const isArrowDown = e.key === "ArrowDown";
+        const isArrowDown =
+          e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey);
         const currentGroupIndex = selectableContactGroups.findIndex(
           (r) => r.selected
         );
@@ -207,10 +234,32 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
             return updatedContacts;
           });
         }
+      } else if (e.key === "Escape") {
+        setRecipientsPopoverOpen(false);
       }
     },
     [selectableContactGroups, selectableContacts]
   );
+
+  const handleRecipientClick = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setCampaign((prevCampaign) => {
+        if (!prevCampaign) return prevCampaign;
+        const updatedCampaign = {
+          ...prevCampaign,
+          recipients: [...prevCampaign.recipients, recipient],
+        };
+        return updatedCampaign;
+      });
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (campaign) {
+      onCampaignUpdate(campaign);
+    }
+  }, [campaign, onCampaignUpdate]);
 
   return (
     <Root>
@@ -218,19 +267,21 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
       <Message>
         <Recipients>
           <RecipientLabel>To:</RecipientLabel>
-          {/* {contactGroups.map((contactGroup) => (
-            <RecipientPill recipient={contactGroup} key={contactGroup.id} />
+          {campaign?.recipients.map((recipient) => (
+            <RecipientPill
+              recipient={recipient}
+              key={recipient.id}
+              clickHandler={handleRecipientClick}
+            />
           ))}
-          {contacts.map((contact) => (
-            <RecipientPill recipient={contact} key={contact.id} />
-          ))} */}
+
           <input
             type="text"
             onChange={handleRecipientsSearch}
             onFocus={handleInputFocus}
             onKeyDown={handleInputKeyDown}
+            onClick={handleInputFocus}
           />
-
           <Popover.Root open={recipientsPopoverOpen}>
             <Popover.Anchor />
             <Popover.Portal>
@@ -238,7 +289,9 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
                 onBlur={handleInputBlur}
                 onOpenAutoFocus={(e) => e.preventDefault()}
               >
-                Tags ({selectableContactGroups.length})
+                <RecipientPopoverLabel>
+                  Tags ({selectableContactGroups.length})
+                </RecipientPopoverLabel>
                 {selectableContactGroups.map(
                   (contactGroup: SelectableRecipient) => (
                     <RecipientPill
@@ -247,15 +300,26 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
                       key={`contact-group-${
                         (contactGroup.recipient as ContactGroup).id
                       }`}
+                      clickHandler={handleRecipientClick}
                     />
                   )
                 )}
-                Individuals ({selectableContacts.length})
+                <Separator.Root
+                  className="SeparatorRoot"
+                  decorative
+                  orientation="horizontal"
+                  style={{ margin: "0 15px" }}
+                />
+                <br />
+                <RecipientPopoverLabel>
+                  Individuals ({selectableContacts.length})
+                </RecipientPopoverLabel>
                 {selectableContacts.map((contact: SelectableRecipient) => (
                   <RecipientPill
                     recipient={contact.recipient as Contact}
                     selected={contact.selected}
                     key={`contact-${(contact.recipient as Contact).id}`}
+                    clickHandler={handleRecipientClick}
                   />
                 ))}
                 {/* <Popover.Close /> */}

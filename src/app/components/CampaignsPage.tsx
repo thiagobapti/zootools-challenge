@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import * as Tabs from "@radix-ui/react-tabs";
 import EmailEditor from "./EmailEditor";
@@ -128,20 +128,42 @@ const TabsRoot = styled(Tabs.Root)`
   flex-direction: column;
 `;
 
+const CampaignItem = styled.div`
+  padding: 16px;
+  border-radius: 6px;
+  background-color: #f1f1f1;
+  cursor: pointer;
+`;
+
 const CampaignsPage: React.FC = () => {
   const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
-  const [campaign, setCampaign] = React.useState<Campaign | null>(null);
+  const [currentCampaign, setCurrentCampaign] = React.useState<Campaign | null>(
+    null
+  );
 
   const handleNewCampaign = () => {
-    setCampaign({
-      id: "1",
+    const newCampaign: Campaign = {
+      id: (campaigns.length + 1).toString(),
       subject: "",
       status: "draft",
       createdAt: new Date().toISOString(),
       body: "",
       recipients: [],
-    });
+    };
+    setCurrentCampaign(newCampaign);
+    setCampaigns((prevCampaigns) => [...prevCampaigns, newCampaign]);
   };
+
+  const handleCampaignUpdate = useCallback(
+    (updatedCampaign: Campaign) => {
+      setCampaigns((prevCampaigns) => {
+        return prevCampaigns.map((campaign) =>
+          campaign.id === updatedCampaign.id ? updatedCampaign : campaign
+        );
+      });
+    },
+    [setCampaigns]
+  );
 
   return (
     <Root>
@@ -163,10 +185,25 @@ const CampaignsPage: React.FC = () => {
               Start your first campaign and let’s change that! 🚀
             </NoCampaigns>
           )}
+          {campaigns.map((campaign) => (
+            <CampaignItem key={campaign.id}>
+              Subject: {campaign.subject}
+              <br />
+              Status: {campaign.status}
+              <br />
+              Created At: {campaign.createdAt}
+              <br />
+              Body: {campaign.body}
+              <br />
+              {campaign.recipients.map((recipient) =>
+                "email" in recipient ? recipient.email : recipient.label
+              )}
+            </CampaignItem>
+          ))}
         </CampaignList>
       </SideList>
       <Container>
-        {campaign && (
+        {currentCampaign && (
           <TabsRoot defaultValue="write">
             <StyledMainHeader>
               <TabsList>
@@ -182,7 +219,10 @@ const CampaignsPage: React.FC = () => {
 
             <EditorTabContent value="write">
               <EditorWrapper>
-                <EmailEditor campaign={campaign} />
+                <EmailEditor
+                  currentCampaign={currentCampaign}
+                  onCampaignUpdate={handleCampaignUpdate}
+                />
               </EditorWrapper>
             </EditorTabContent>
             <Tabs.Content value="send">Send</Tabs.Content>

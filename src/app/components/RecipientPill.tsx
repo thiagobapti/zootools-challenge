@@ -1,6 +1,6 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import Image from "next/image";
-import React from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import { Contact, ContactGroup } from "../types/general";
 
@@ -57,18 +57,24 @@ const TagIcon = styled.div<{ $themeColor?: string }>`
 
 const RecipientPill: React.FC<{
   recipient: Contact | ContactGroup;
-  selected: boolean;
-}> = ({ recipient, selected }) => {
+  selected?: boolean;
+  clickHandler: (recipient: Contact | ContactGroup) => void;
+}> = ({ recipient, selected, clickHandler }) => {
   const isContactGroup = (
     recipient: Contact | ContactGroup
   ): recipient is ContactGroup => {
     return (recipient as ContactGroup).label !== undefined;
   };
 
+  const handleClick = useCallback(() => {
+    clickHandler(recipient);
+  }, [clickHandler, recipient]);
+
   return (
     <Root
       data-selected={selected}
       $themeColor={isContactGroup(recipient) ? recipient.themeColor : undefined}
+      onClick={handleClick}
     >
       {isContactGroup(recipient) ? (
         <>
