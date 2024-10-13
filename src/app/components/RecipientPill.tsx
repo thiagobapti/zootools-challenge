@@ -2,6 +2,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import Image from "next/image";
 import React from "react";
 import styled from "styled-components";
+import { Contact, ContactGroup } from "../types/general";
 
 const Root = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== "themeColor",
@@ -43,21 +44,38 @@ const TagIcon = styled.div.withConfig({
 })<{ themeColor?: string }>`
   width: 8px;
   height: 8px;
-  background: ${(props) =>
-    props.themeColor
-      ? `linear-gradient(to right, 
-rgba(${props.themeColor}, 0.5) 0%, 
-      rgba(${props.themeColor}, .8) 100%)`
-      : "white"};
-  border: 1px solid ${(props) => `rgba(${props.themeColor}, 1)`};
-  border-radius: 50%;
   margin: 0 8px;
+  border-radius: 50%;
+  border: 1px solid ${(props) => `rgba(${props.themeColor}, 1)`};
+  background: ${(props) => `rgba(${props.themeColor}, 1)`};
 `;
 
-const RecipientPill: React.FC<{ recipient: any }> = ({ recipient }) => {
+// background: ${(props) =>
+//   `linear-gradient(
+//         to right,
+//         rgba(${props.themeColor}, 0.5) 0%,
+//         rgba(${props.themeColor}, 0.8) 100%
+//       )`};
+
+const RecipientPill: React.FC<{ recipient: Contact | ContactGroup }> = ({
+  recipient,
+}) => {
+  const isContactGroup = (
+    recipient: Contact | ContactGroup
+  ): recipient is ContactGroup => {
+    return (recipient as ContactGroup).label !== undefined;
+  };
+
   return (
-    <Root themeColor={recipient.themeColor}>
-      {recipient.type === "individual" && (
+    <Root
+      themeColor={isContactGroup(recipient) ? recipient.themeColor : undefined}
+    >
+      {isContactGroup(recipient) ? (
+        <>
+          <TagIcon themeColor={recipient.themeColor} />
+          {recipient.label}
+        </>
+      ) : (
         <>
           <AvatarWrapper>
             <Image
@@ -68,12 +86,6 @@ const RecipientPill: React.FC<{ recipient: any }> = ({ recipient }) => {
             />
           </AvatarWrapper>
           {recipient.email}
-        </>
-      )}
-      {recipient.type === "tag" && (
-        <>
-          <TagIcon themeColor={recipient.themeColor} />
-          {recipient.name}
         </>
       )}
     </Root>

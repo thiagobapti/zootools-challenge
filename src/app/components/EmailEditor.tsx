@@ -3,7 +3,7 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
-import { groups, contacts } from "../data/database";
+import { contactGroups, contacts } from "../data/database";
 import { ContactGroup, Contact, Campaign } from "../types/general";
 
 const Root = styled.div`
@@ -83,6 +83,7 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
             <RecipientPill recipient={recipient} key={recipient.id} />
           ))} */}
           <input type="text" onChange={handleRecipientsSearch} />
+
           <Popover.Root open={recipientsPopoverOpen}>
             <Popover.Anchor />
             <Popover.Portal>
@@ -94,25 +95,31 @@ const EmailEditor: React.FC<{ campaign: Campaign }> = ({ campaign }) => {
                 <br />
                 Tags (3)
                 <br />
-                {/* {recipientsData
-                  .filter((recipient) =>
-                    recipient.name
+                {contactGroups
+                  .filter((contactGroup: ContactGroup) =>
+                    contactGroup.label
                       .toLowerCase()
                       .includes(searchTerm.toLowerCase())
                   )
-                  .map((recipient) => (
-                    <RecipientPill recipient={recipient} key={recipient.id} />
-                  ))} */}
+                  .map((contactGroup: ContactGroup) => (
+                    <RecipientPill
+                      recipient={contactGroup}
+                      key={`contact-group-${contactGroup.id}`}
+                    />
+                  ))}
                 Individuals:
-                {/* {recipientsData
-                  .filter((recipient) =>
-                    recipient.name
+                {contacts
+                  .filter((contact: Contact) =>
+                    contact.name
                       .toLowerCase()
                       .includes(searchTerm.toLowerCase())
                   )
-                  .map((recipient) => (
-                    <RecipientPill recipient={recipient} key={recipient.id} />
-                  ))} */}
+                  .map((contact: Contact) => (
+                    <RecipientPill
+                      recipient={contact}
+                      key={`contact-${contact.id}`}
+                    />
+                  ))}
                 {/* <Popover.Close /> */}
                 {/* <Popover.Arrow /> */}
               </Popover.Content>

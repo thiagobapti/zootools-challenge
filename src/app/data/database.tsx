@@ -21,7 +21,7 @@ const themeColors: ThemeColor = {
   blue: "6, 182, 212",
 };
 
-const groups: ContactGroup[] = [
+const contactGroups: ContactGroup[] = [
   { id: "1", label: "US customers", themeColor: themeColors.orange },
   { id: "2", label: "Europe customers", themeColor: themeColors.red },
   { id: "3", label: "Asia customers", themeColor: themeColors.green },
@@ -29,4 +29,4 @@ const groups: ContactGroup[] = [
   { id: "5", label: "Australia customers", themeColor: themeColors.blue },
 ];
 
-export { contacts, groups };
+export { contacts, contactGroups };
