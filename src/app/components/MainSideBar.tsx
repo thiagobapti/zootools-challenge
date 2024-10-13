@@ -11,11 +11,11 @@ import {
   faChartSimple,
   faChevronRight,
   faEnvelope,
-  faHouse,
 } from "@fortawesome/free-solid-svg-icons";
 import { usePathname } from "next/navigation";
+import { storage } from "../util/storage";
 
-const StyledRoot = styled.div`
+const Root = styled.div`
   display: flex;
   flex-direction: column;
   padding: 16px 22px;
@@ -23,11 +23,11 @@ const StyledRoot = styled.div`
   position: relative;
 `;
 
-const StyledSidebarLogo = styled(Image)`
+const SidebarLogo = styled(Image)`
   cursor: pointer;
 `;
 
-const StyledSidebarLogoName = styled(Image)`
+const SidebarLogoName = styled(Image)`
   cursor: pointer;
   margin-left: 12px;
 `;
@@ -50,13 +50,15 @@ const SidebarButton = styled.button.withConfig({
   color: ${(props) => (props.active ? "#fff" : "#454545")};
   cursor: pointer;
   overflow: hidden;
-  transition: width 0.3s ease;
 `;
 
-const CollapsibleContent = styled.div<{ open: boolean }>`
+const CollapsibleContent = styled.div<{
+  open: boolean;
+  animatedSidebar: boolean;
+}>`
   width: ${(props) => (props.open ? "200px" : "40px")};
   overflow: hidden;
-  transition: width 0.3s ease;
+  transition: width ${(props) => (props.animatedSidebar ? "0.3s ease" : "0")};
   white-space: nowrap;
   display: flex;
   flex-direction: column;
@@ -75,12 +77,12 @@ const SidebarIcon = styled(FontAwesomeIcon).withConfig({
   color: ${(props) => (props.active ? "#fff" : "#454545")};
 `;
 
-const StyledLogoWrapper = styled.div`
+const LogoWrapper = styled.div`
   display: flex;
   align-items: center;
 `;
 
-const StyledToggleButton = styled.button`
+const ToggleButton = styled.button`
   border: none;
   background: none;
   cursor: pointer;
@@ -97,7 +99,7 @@ const StyledToggleButton = styled.button`
   justify-content: center;
 `;
 
-const StyledToggleIcon = styled(FontAwesomeIcon)<{ open: boolean }>`
+const ToggleIcon = styled(FontAwesomeIcon)<{ open: boolean }>`
   width: 8px;
   height: 8px;
   transform: ${(props) => (props.open ? "rotate(180deg)" : "rotate(0)")};
@@ -107,39 +109,65 @@ const StyledToggleIcon = styled(FontAwesomeIcon)<{ open: boolean }>`
 
 const MainSideBar: React.FC = () => {
   const pathname = usePathname();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(true);
+  const [animatedSidebar, setAnimatedSidebar] = React.useState(false);
 
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedValue = window.sessionStorage.getItem("sidebarOpen");
-      setOpen(storedValue !== "false");
+  React.useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mainNavExpanded = window.sessionStorage.getItem(
+      storage.mainNav.expanded
+    );
+    const mainNavTouched = window.sessionStorage.getItem(
+      storage.mainNav.touched
+    );
+    const initialAnimation = window.sessionStorage.getItem(
+      storage.mainNav.initialAnimation
+    );
+
+    if (initialAnimation && mainNavExpanded !== "true") {
+      setOpen(false);
+      window.sessionStorage.setItem(storage.mainNav.expanded, "false");
+    }
+
+    if ((!mainNavExpanded || mainNavExpanded === "false") && mainNavTouched) {
+      const timeoutId = window.setTimeout(() => {
+        window.sessionStorage.setItem(storage.mainNav.initialAnimation, "true");
+        setAnimatedSidebar(true);
+        setOpen(false);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
     }
   }, []);
 
   const handleToggle = React.useCallback(() => {
+    setAnimatedSidebar(true);
     setOpen((prevOpen) => {
       const newOpen = !prevOpen;
-      window.sessionStorage.setItem("sidebarOpen", newOpen.toString());
+      window.sessionStorage.setItem(
+        storage.mainNav.expanded,
+        newOpen.toString()
+      );
       return newOpen;
     });
   }, []);
 
   const handleLinkClick = React.useCallback(() => {
-    setOpen(false);
-    window.sessionStorage.setItem("sidebarOpen", "false");
+    window.sessionStorage.setItem(storage.mainNav.touched, "true");
   }, []);
 
   return (
-    <StyledRoot>
-      <StyledToggleButton
+    <Root>
+      <ToggleButton
         onClick={handleToggle}
         title={open ? "Collapse sidebar" : "Expand sidebar"}
         aria-label={open ? "Collapse sidebar" : "Expand sidebar"}
       >
-        <StyledToggleIcon icon={faChevronRight} open={open} />
-      </StyledToggleButton>
-      <StyledLogoWrapper>
-        <StyledSidebarLogo
+        <ToggleIcon icon={faChevronRight} open={open} />
+      </ToggleButton>
+      <LogoWrapper>
+        <SidebarLogo
           src={zooToolsLogoMinSvg}
           role="button"
           alt="ZooTools Logo"
@@ -148,7 +176,7 @@ const MainSideBar: React.FC = () => {
           title={open ? "Collapse sidebar" : "Expand sidebar"}
         />
         {open && (
-          <StyledSidebarLogoName
+          <SidebarLogoName
             src={zooToolsLogoNameSvg}
             alt="ZooTools Logo"
             height={20}
@@ -156,8 +184,8 @@ const MainSideBar: React.FC = () => {
             onClick={handleToggle}
           />
         )}
-      </StyledLogoWrapper>
-      <CollapsibleContent open={open}>
+      </LogoWrapper>
+      <CollapsibleContent open={open} animatedSidebar={animatedSidebar}>
         <Link href="/" passHref onClick={handleLinkClick}>
           <SidebarButton active={pathname === "/"} open={open}>
             <SidebarIcon
@@ -179,7 +207,7 @@ const MainSideBar: React.FC = () => {
           </SidebarButton>
         </Link>
       </CollapsibleContent>
-    </StyledRoot>
+    </Root>
   );
 };
 
