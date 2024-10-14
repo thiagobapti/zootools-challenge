@@ -61,7 +61,8 @@ const RecipientPill: React.FC<{
   selected?: boolean;
   title?: string;
   clickHandler?: (recipient: Contact | ContactGroup) => void;
-}> = ({ recipient, selected, clickHandler, title }) => {
+  tabIndex?: number;
+}> = ({ recipient, selected, clickHandler, title, tabIndex }) => {
   const isContactGroup = (
     recipient: Contact | ContactGroup
   ): recipient is ContactGroup => {
@@ -79,6 +80,7 @@ const RecipientPill: React.FC<{
       $themeColor={isContactGroup(recipient) ? recipient.themeColor : undefined}
       onClick={handleClick}
       $clickable={clickHandler !== undefined}
+      tabIndex={tabIndex}
     >
       {isContactGroup(recipient) ? (
         <>

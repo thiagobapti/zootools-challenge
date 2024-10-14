@@ -1,5 +1,4 @@
-import * as Tabs from "@radix-ui/react-tabs";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
@@ -27,9 +26,8 @@ import {
   filterSuggestionItems,
 } from "@blocknote/core";
 import { EditorVariable } from "./EditorVariable";
-import { mjmlToHTML } from "../util/mjml";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFont, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 
 const Root = styled.div`
   flex: 1;
@@ -54,34 +52,34 @@ const Message = styled.div`
 `;
 
 const Recipients = styled.div`
-  // border: 1px solid #d7d7d7;
   display: inline-flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
 `;
 
 const Subject = styled.div`
   margin-top: 8px;
-  // border: 1px solid #d7d7d7;
 `;
 
 const Editor = styled.div`
   margin-top: 8px;
-  // border: 1px solid #d7d7d7;
   flex: 1;
 `;
 
 const RecipientLabel = styled.span`
   font-weight: 600;
-  margin-right: 4px;
+  margin-right: 8px;
   font-size: 14px;
+  margin-top: 6px;
 `;
 
 const PopoverContent = styled(Popover.Content)`
-  background: #f1f1f1;
-  border: 1px solid #d7d7d7;
+  background: #fff;
   border-radius: 8px;
   padding: 12px 6px;
+  min-width: 260px;
+  box-shadow: 0px 0px 8px 4px #00000024;
+  outline: none;
 `;
 
 const RecipientPopoverLabel = styled.div`
@@ -94,6 +92,21 @@ const RecipientTextInput = styled.input`
   background: transparent;
   outline: none;
   flex: 1;
+  width: 100%;
+  min-width: 200px;
+  margin-top: 10px;
+`;
+
+const RecipientPopoverEmpty = styled.div`
+  font-style: italic;
+  color: #999;
+  margin-top: 8px;
+  font-size: 12px;
+`;
+
+const RecipientsInputWrapper = styled.div`
+  position: relative;
+  flex: 1;
 `;
 
 const EmailEditor: React.FC<{
@@ -102,11 +115,9 @@ const EmailEditor: React.FC<{
 }> = ({ currentCampaign, onCampaignUpdate }) => {
   const [campaign, setCampaign] = useState<Campaign>({
     ...currentCampaign,
-    subject: currentCampaign.subject || "", // Default to an empty string
+    subject: currentCampaign.subject || "",
   });
-  const [bodyJSON, setBodyJSON] = useState<BlockNoteSchema<any, any, any>>(
-    {} as BlockNoteSchema<any, any, any>
-  );
+
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectableContacts, setSelectableContacts] = useState<
@@ -118,6 +129,8 @@ const EmailEditor: React.FC<{
   const [selectedRecipient, setSelectedRecipient] = useState<
     Contact | ContactGroup | undefined
   >(undefined);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const schema = BlockNoteSchema.create({
     inlineContentSpecs: {
@@ -215,12 +228,28 @@ const EmailEditor: React.FC<{
 
   const handleInputBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
-      if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+      if (
+        (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) &&
+        (!popoverRef.current || !popoverRef.current.contains(e.relatedTarget))
+      ) {
         setRecipientsPopoverOpen(false);
       }
     },
     []
   );
+
+  const handlePopoverBlur = useCallback(
+    (e: React.FocusEvent<HTMLDivElement>) => {
+      if (!e.currentTarget.contains(e.relatedTarget)) {
+        setRecipientsPopoverOpen(false);
+      }
+    },
+    []
+  );
+
+  const handlePopoverEscape = useCallback(() => {
+    setRecipientsPopoverOpen(false);
+  }, []);
 
   const handleInputFocus = useCallback(() => {
     setSelectableContactGroups((prevGroups) =>
@@ -265,8 +294,8 @@ const EmailEditor: React.FC<{
     });
   }, []);
 
-  const handleInputKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
       if (e.key === "Backspace") {
         handleBackspace();
       } else if (
@@ -388,6 +417,20 @@ const EmailEditor: React.FC<{
     ]
   );
 
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      handleKeyDown(e);
+    },
+    [handleKeyDown]
+  );
+
+  const handlePopoverKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      handleKeyDown(e);
+    },
+    [handleKeyDown]
+  );
+
   useEffect(() => {
     if (campaign) {
       onCampaignUpdate(campaign);
@@ -426,8 +469,7 @@ const EmailEditor: React.FC<{
     []
   );
 
-  // Function which gets all users for the mentions menu.
-  const getMentionMenuItems = (
+  const getVariablesMenuItems = (
     editor: typeof schema.BlockNoteEditor
   ): DefaultReactSuggestionItem[] => {
     return editorVariables.map((variable) => ({
@@ -444,7 +486,7 @@ const EmailEditor: React.FC<{
               variableLabel: variable.label,
             },
           },
-          " ", // add a space after the mention
+          " ",
         ]);
       },
     }));
@@ -475,6 +517,13 @@ const EmailEditor: React.FC<{
     //     console.log(html);
   }, [editor]);
 
+  const handleRecipientsClick = useCallback(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+    setRecipientsPopoverOpen(true);
+  }, []);
+
   return (
     <Root>
       <Header>
@@ -482,7 +531,7 @@ const EmailEditor: React.FC<{
         <button onClick={handlePreview}>Preview</button>
       </Header>
       <Message>
-        <Recipients>
+        <Recipients onClick={handleRecipientsClick}>
           <RecipientLabel>To:</RecipientLabel>
           {campaign?.recipients.map((recipient) => (
             <RecipientPill
@@ -496,24 +545,36 @@ const EmailEditor: React.FC<{
           ))}
 
           <Popover.Root open={recipientsPopoverOpen}>
-            <div style={{ position: "relative" }}>
+            <RecipientsInputWrapper>
               <RecipientTextInput
                 type="text"
+                ref={inputRef}
                 onChange={handleRecipientsSearch}
                 onFocus={handleInputFocus}
                 onKeyDown={handleInputKeyDown}
                 onClick={handleInputFocus}
+                onBlur={handleInputBlur}
               />
               <Popover.Anchor />
-            </div>
+            </RecipientsInputWrapper>
             <Popover.Portal>
               <PopoverContent
-                onBlur={handleInputBlur}
+                ref={popoverRef}
                 onOpenAutoFocus={(e) => e.preventDefault()}
+                onBlur={handlePopoverBlur}
+                onEscapeKeyDown={handlePopoverEscape}
+                sideOffset={10}
+                side="bottom"
+                align="start"
+                tabIndex={-1}
+                onKeyDown={handlePopoverKeyDown}
               >
                 <RecipientPopoverLabel>
                   Tags ({selectableContactGroups.length})
                 </RecipientPopoverLabel>
+                {!selectableContactGroups.length && (
+                  <RecipientPopoverEmpty>None</RecipientPopoverEmpty>
+                )}
                 {selectableContactGroups.map(
                   (contactGroup: SelectableRecipient) => (
                     <RecipientPill
@@ -524,6 +585,7 @@ const EmailEditor: React.FC<{
                       }`}
                       clickHandler={handleRecipientClick}
                       title="Click to add to recipients"
+                      tabIndex={-1}
                     />
                   )
                 )}
@@ -537,6 +599,9 @@ const EmailEditor: React.FC<{
                 <RecipientPopoverLabel>
                   Individuals ({selectableContacts.length})
                 </RecipientPopoverLabel>
+                {!selectableContacts.length && (
+                  <RecipientPopoverEmpty>None</RecipientPopoverEmpty>
+                )}
                 {selectableContacts.map((contact: SelectableRecipient) => (
                   <RecipientPill
                     recipient={contact.recipient as Contact}
@@ -544,10 +609,9 @@ const EmailEditor: React.FC<{
                     key={`contact-${(contact.recipient as Contact).id}`}
                     clickHandler={handleRecipientClick}
                     title="Click to add to recipients"
+                    tabIndex={-1}
                   />
                 ))}
-                {/* <Popover.Close /> */}
-                {/* <Popover.Arrow /> */}
               </PopoverContent>
             </Popover.Portal>
           </Popover.Root>
@@ -569,7 +633,7 @@ const EmailEditor: React.FC<{
             <SuggestionMenuController
               triggerCharacter={"@"}
               getItems={async (query) =>
-                filterSuggestionItems(getMentionMenuItems(editor), query)
+                filterSuggestionItems(getVariablesMenuItems(editor), query)
               }
             />
           </BlockNoteView>
