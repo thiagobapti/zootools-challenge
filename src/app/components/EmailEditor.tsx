@@ -8,18 +8,21 @@ import {
   DefaultReactSuggestionItem,
   SuggestionMenuController,
   useCreateBlockNote,
+  getDefaultReactSlashMenuItems,
 } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import {
   BlockNoteSchema,
   defaultInlineContentSpecs,
   filterSuggestionItems,
+  PartialBlock,
 } from "@blocknote/core";
 import { EditorVariable } from "./EditorVariable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import RecipientsInput from "./RecipientsInput";
 import RecipientDetailDialog from "./RecipientDetailDialog";
+import { IoFlash } from "react-icons/io5";
 
 const Root = styled.div`
   flex: 1;
@@ -76,6 +79,32 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
   onCampaignUpdate,
 }) => {
   const [campaign, setCampaign] = useState<Campaign>();
+  const [selectedRecipient, setSelectedRecipient] = useState<
+    Contact | ContactGroup | undefined
+  >(undefined);
+  const insertHelloWorldItem = (editor: typeof schema.BlockNoteEditor) => ({
+    title: "Add CTA Button",
+    onItemClick: () => {
+      const currentBlock = editor.getTextCursorPosition().block;
+      const addCtaButtonBlock: PartialBlock = {
+        type: "paragraph",
+        content: [{ type: "text", text: "[ Button ]", styles: { bold: true } }],
+      };
+
+      editor.insertBlocks([addCtaButtonBlock], currentBlock, "after");
+    },
+    group: "Actions",
+    icon: <IoFlash size={18} />,
+    subtext: "Customize label, color and destination",
+  });
+
+  const getCustomSlashMenuItems = (
+    editor: typeof schema.BlockNoteEditor
+  ): DefaultReactSuggestionItem[] => [
+    ...getDefaultReactSlashMenuItems(editor),
+    insertHelloWorldItem(editor),
+  ];
+
   const schema = BlockNoteSchema.create({
     inlineContentSpecs: {
       ...defaultInlineContentSpecs,
@@ -91,9 +120,6 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
       },
     ],
   });
-  const [selectedRecipient, setSelectedRecipient] = useState<
-    Contact | ContactGroup | undefined
-  >(undefined);
 
   useEffect(() => {
     setCampaign(currentCampaign);
@@ -191,11 +217,17 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
           />
         </Subject>
         <Editor>
-          <BlockNoteView editor={editor} theme="light">
+          <BlockNoteView editor={editor} theme="light" slashMenu={false}>
             <SuggestionMenuController
               triggerCharacter={"@"}
               getItems={async (query) =>
                 filterSuggestionItems(getVariablesMenuItems(editor), query)
+              }
+            />
+            <SuggestionMenuController
+              triggerCharacter={"/"}
+              getItems={async (query) =>
+                filterSuggestionItems(getCustomSlashMenuItems(editor), query)
               }
             />
           </BlockNoteView>
