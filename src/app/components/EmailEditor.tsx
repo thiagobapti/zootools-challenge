@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
-import { contactGroups, contacts } from "../data/database";
+import { contactGroups, contacts, editorVariables } from "../data/database";
 import * as Separator from "@radix-ui/react-separator";
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/mantine/style.css";
@@ -15,8 +15,21 @@ import {
   SelectableRecipient,
 } from "../types/general";
 import RecipientDetailDialog from "./RecipientDetailDialog";
-import { useCreateBlockNote } from "@blocknote/react";
+import {
+  DefaultReactSuggestionItem,
+  SuggestionMenuController,
+  useCreateBlockNote,
+} from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
+import {
+  BlockNoteSchema,
+  defaultInlineContentSpecs,
+  filterSuggestionItems,
+} from "@blocknote/core";
+import { EditorVariable } from "./EditorVariable";
+import { mjmlToHTML } from "../util/mjml";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faFont, faUser } from "@fortawesome/free-solid-svg-icons";
 
 const Root = styled.div`
   flex: 1;
@@ -87,11 +100,13 @@ const EmailEditor: React.FC<{
   currentCampaign: Campaign;
   onCampaignUpdate: (updatedCampaign: Campaign) => void;
 }> = ({ currentCampaign, onCampaignUpdate }) => {
-  const editor = useCreateBlockNote();
   const [campaign, setCampaign] = useState<Campaign>({
     ...currentCampaign,
     subject: currentCampaign.subject || "", // Default to an empty string
   });
+  const [bodyJSON, setBodyJSON] = useState<BlockNoteSchema<any, any, any>>(
+    {} as BlockNoteSchema<any, any, any>
+  );
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectableContacts, setSelectableContacts] = useState<
@@ -100,15 +115,31 @@ const EmailEditor: React.FC<{
   const [selectableContactGroups, setSelectableContactGroups] = useState<
     SelectableRecipient[]
   >([]);
-  // const [dialogOpen, setDialogOpen] = useState<boolean>(false);
   const [selectedRecipient, setSelectedRecipient] = useState<
     Contact | ContactGroup | undefined
   >(undefined);
 
+  const schema = BlockNoteSchema.create({
+    inlineContentSpecs: {
+      ...defaultInlineContentSpecs,
+      mention: EditorVariable,
+    },
+  });
+
+  const editor = useCreateBlockNote({
+    schema,
+    initialContent: [
+      {
+        type: "paragraph",
+        content: "Hello, world!",
+      },
+    ],
+  });
+
   useEffect(() => {
     setCampaign({
       ...currentCampaign,
-      subject: currentCampaign.subject || "", // Ensure subject is always defined
+      subject: currentCampaign.subject || "",
     });
   }, [currentCampaign]);
 
@@ -368,9 +399,62 @@ const EmailEditor: React.FC<{
     []
   );
 
+  // Function which gets all users for the mentions menu.
+  const getMentionMenuItems = (
+    editor: typeof schema.BlockNoteEditor
+  ): DefaultReactSuggestionItem[] => {
+    return editorVariables.map((variable) => ({
+      title: variable.label,
+      group: variable.group,
+      icon: <FontAwesomeIcon icon={faUser} />,
+      subtext: variable.subtext,
+      onItemClick: () => {
+        editor.insertInlineContent([
+          {
+            type: "mention",
+            props: {
+              variableId: variable.id,
+              variableLabel: variable.label,
+            },
+          },
+          " ", // add a space after the mention
+        ]);
+      },
+    }));
+  };
+
+  const handleEditorChange = useCallback(async () => {
+    // setBodyJSON(content);
+    console.log(editor.document);
+    const fullHTML = await editor.blocksToFullHTML(editor.document);
+    console.log(fullHTML);
+    const lossyHTML = await editor.blocksToHTMLLossy(editor.document);
+    console.log(lossyHTML);
+  }, [editor]);
+
+  const handlePreview = useCallback(() => {
+    // const html = mjmlToHTML(editor.document.toString());
+    //     const html = mjmlToHTML(`<mjml>
+    //   <mj-body>
+    //     <mj-section>
+    //       <mj-column>
+    //         <mj-image width="100px" src="/assets/img/logo-small.png"></mj-image>
+    //         <mj-divider border-color="#F45E43"></mj-divider>
+    //         <mj-text font-size="20px" color="#F45E43" font-family="helvetica">Hello World</mj-text>
+    //       </mj-column>
+    //     </mj-section>
+    //   </mj-body>
+    // </mjml>`);
+    //     console.log(html);
+    editor.openSuggestionMenu("/");
+  }, [editor]);
+
   return (
     <Root>
-      <Header>New Message</Header>
+      <Header>
+        New Message
+        <button onClick={handlePreview}>Preview</button>
+      </Header>
       <Message>
         <Recipients>
           <RecipientLabel>To:</RecipientLabel>
@@ -449,8 +533,20 @@ const EmailEditor: React.FC<{
           />
         </Subject>
         <Editor>
-          <BlockNoteView editor={editor} theme="light" />
+          <BlockNoteView
+            editor={editor}
+            theme="light"
+            onChange={handleEditorChange}
+          >
+            <SuggestionMenuController
+              triggerCharacter={"@"}
+              getItems={async (query) =>
+                filterSuggestionItems(getMentionMenuItems(editor), query)
+              }
+            />
+          </BlockNoteView>
         </Editor>
+        {/* <EmailPreview /> */}
       </Message>
       {selectedRecipient && (
         <RecipientDetailDialog

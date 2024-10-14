@@ -41,10 +41,18 @@ type SelectableRecipient = {
   recipient: Contact | ContactGroup;
 };
 
+type EditorVariable = {
+  id: string;
+  label: string;
+  group: string;
+  subtext: string;
+};
+
 export type {
   Campaign,
   Contact,
   ContactGroup,
+  EditorVariable,
   SelectableRecipient,
   ThemeColor,
 };

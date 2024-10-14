@@ -1,4 +1,30 @@
-import { ContactGroup, Contact, ThemeColor } from "../types/general";
+import {
+  ContactGroup,
+  Contact,
+  ThemeColor,
+  EditorVariable,
+} from "../types/general";
+
+const editorVariables: EditorVariable[] = [
+  {
+    id: "$firstName",
+    label: "First Name",
+    group: "Contact Info",
+    subtext: "Contact's first name",
+  },
+  {
+    id: "$lastName",
+    label: "Last Name",
+    group: "Contact Info",
+    subtext: "Contact's last name",
+  },
+  {
+    id: "$email",
+    label: "Email",
+    group: "Contact Info",
+    subtext: "Contact's email",
+  },
+];
 
 const contacts: Contact[] = [
   {
@@ -165,4 +191,4 @@ const contactGroups: ContactGroup[] = [
   },
 ];
 
-export { contacts, contactGroups };
+export { contacts, contactGroups, editorVariables };

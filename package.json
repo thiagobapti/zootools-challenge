@@ -22,9 +22,16 @@
     "@radix-ui/react-popover": "^1.1.2",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
+    "@types/mjml": "^4.7.4",
+    "@types/mjml-browser": "^4.15.0",
+    "@types/mjml-react": "^2.0.10",
+    "fs": "^0.0.1-security",
+    "mjml": "^4.15.3",
+    "mjml-browser": "^4.15.3",
+    "mjml-react": "^2.0.8",
     "next": "14.2.15",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "styled-components": "^6.1.13"
   },
   "devDependencies": {
