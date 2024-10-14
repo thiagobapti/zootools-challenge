@@ -158,7 +158,47 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
     updateRecipients(updatedRecipients);
   }, [updateRecipients, campaignRecipients]);
 
-  //TODO
+  const selectRecipient = useCallback(() => {
+    const selectedGroupIndex = selectableContactGroups.findIndex(
+      (group) => group.selected
+    );
+    const selectedContactIndex = selectableContacts.findIndex(
+      (contact) => contact.selected
+    );
+
+    if (selectedGroupIndex !== -1) {
+      handleRecipientClick(
+        selectableContactGroups[selectedGroupIndex].recipient
+      );
+      setSelectableContactGroups((prevGroups) => {
+        const updatedGroups = [...prevGroups];
+        updatedGroups[selectedGroupIndex].selected = false;
+        const nextIndex = selectedGroupIndex + 1;
+        if (nextIndex < prevGroups.length) {
+          updatedGroups[nextIndex].selected = true;
+        } else if (selectableContacts.length > 0) {
+          setSelectableContacts((prevContacts) => {
+            const updatedContacts = [...prevContacts];
+            updatedContacts[0].selected = true;
+            return updatedContacts;
+          });
+        }
+        return updatedGroups;
+      });
+    } else if (selectedContactIndex !== -1) {
+      handleRecipientClick(selectableContacts[selectedContactIndex].recipient);
+      setSelectableContacts((prevContacts) => {
+        const updatedContacts = [...prevContacts];
+        updatedContacts[selectedContactIndex].selected = false;
+        const nextIndex = selectedContactIndex + 1;
+        if (nextIndex < prevContacts.length) {
+          updatedContacts[nextIndex].selected = true;
+        }
+        return updatedContacts;
+      });
+    }
+  }, [selectableContactGroups, selectableContacts, handleRecipientClick]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Backspace") {
@@ -173,10 +213,10 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
         const isArrowDown =
           e.key === "ArrowDown" || (e.key === "Tab" && !e.shiftKey);
         const currentGroupIndex = selectableContactGroups.findIndex(
-          (r) => r.selected
+          (group) => group.selected
         );
         const currentContactIndex = selectableContacts.findIndex(
-          (r) => r.selected
+          (contact) => contact.selected
         );
 
         if (currentGroupIndex !== -1) {
@@ -230,55 +270,16 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
         }
       } else if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
-        const selectedGroupIndex = selectableContactGroups.findIndex(
-          (r) => r.selected
-        );
-        const selectedContactIndex = selectableContacts.findIndex(
-          (r) => r.selected
-        );
-
-        if (selectedGroupIndex !== -1) {
-          handleRecipientClick(
-            selectableContactGroups[selectedGroupIndex].recipient
-          );
-          setSelectableContactGroups((prevGroups) => {
-            const updatedGroups = [...prevGroups];
-            updatedGroups[selectedGroupIndex].selected = false;
-            const nextIndex = selectedGroupIndex + 1;
-            if (nextIndex < prevGroups.length) {
-              updatedGroups[nextIndex].selected = true;
-            } else if (selectableContacts.length > 0) {
-              setSelectableContacts((prevContacts) => {
-                const updatedContacts = [...prevContacts];
-                updatedContacts[0].selected = true;
-                return updatedContacts;
-              });
-            }
-            return updatedGroups;
-          });
-        } else if (selectedContactIndex !== -1) {
-          handleRecipientClick(
-            selectableContacts[selectedContactIndex].recipient
-          );
-          setSelectableContacts((prevContacts) => {
-            const updatedContacts = [...prevContacts];
-            updatedContacts[selectedContactIndex].selected = false;
-            const nextIndex = selectedContactIndex + 1;
-            if (nextIndex < prevContacts.length) {
-              updatedContacts[nextIndex].selected = true;
-            }
-            return updatedContacts;
-          });
-        }
+        selectRecipient();
       } else if (e.key === "Escape") {
         setRecipientsPopoverOpen(false);
       }
     },
     [
+      handleBackspace,
       selectableContactGroups,
       selectableContacts,
-      handleRecipientClick,
-      handleBackspace,
+      selectRecipient,
     ]
   );
 

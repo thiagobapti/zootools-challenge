@@ -105,7 +105,6 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
     }
   }, [campaign, onCampaignUpdate]);
 
-  //TODO
   const handleSubjectChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setCampaign((prevCampaign) => {
