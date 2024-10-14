@@ -6,10 +6,11 @@ import { Contact, ContactGroup } from "../types/general";
 import * as Dialog from "@radix-ui/react-dialog";
 import RecipientPill from "./RecipientPill";
 import { contactGroups } from "../data/database";
+import { isContactGroup } from "../util/misc";
 
 const Root = styled(Dialog.Root)``;
 
-const StyledOverlay = styled(Dialog.Overlay)`
+const Overlay = styled(Dialog.Overlay)`
   background-color: rgba(0, 0, 0, 0.15);
   position: fixed;
   top: 0;
@@ -18,7 +19,7 @@ const StyledOverlay = styled(Dialog.Overlay)`
   left: 0;
 `;
 
-const StyledContent = styled(Dialog.Content)`
+const Content = styled(Dialog.Content)`
   position: fixed;
   top: 50%;
   left: 50%;
@@ -119,6 +120,7 @@ const CloseButton = styled(Dialog.Close)`
   cursor: pointer;
   font-weight: 600;
 `;
+
 const InfoRow = styled.div`
   display: flex;
   align-items: center;
@@ -138,16 +140,20 @@ const InfoTable = styled.div`
   margin-top: 22px;
 `;
 
-const RecipientDetailDialog: React.FC<{
+interface RecipientDetailDialogProps {
   recipient: Contact | ContactGroup;
   closeHandler: () => void;
   removeHandler: (recipient: Contact | ContactGroup) => void;
-}> = ({ recipient, closeHandler, removeHandler }) => {
-  const isContactGroup = (
-    recipient: Contact | ContactGroup
-  ): recipient is ContactGroup => {
-    return (recipient as ContactGroup).label !== undefined;
-  };
+}
+
+const RecipientDetailDialog: React.FC<RecipientDetailDialogProps> = ({
+  recipient,
+  closeHandler,
+  removeHandler,
+}) => {
+  const groups = contactGroups.filter((group) =>
+    group.contacts.some((contact) => contact.id === recipient.id)
+  );
 
   const renderStatistics = () => (
     <StatisticsTable>
@@ -170,14 +176,10 @@ const RecipientDetailDialog: React.FC<{
     </StatisticsTable>
   );
 
-  const groups = contactGroups.filter((group) =>
-    group.contacts.some((contact) => contact.id === recipient.id)
-  );
-
   return (
     <Root open>
-      <StyledOverlay />
-      <StyledContent>
+      <Overlay />
+      <Content>
         <DialogTitle>
           {isContactGroup(recipient) ? (
             <>
@@ -245,7 +247,7 @@ const RecipientDetailDialog: React.FC<{
           </RemoveButton>
           <CloseButton onClick={closeHandler}>Close</CloseButton>
         </Footer>
-      </StyledContent>
+      </Content>
     </Root>
   );
 };

@@ -1,4 +1,3 @@
-// Define a base type for common properties
 type BaseContact = {
   id: string;
   campaignsSent: number;

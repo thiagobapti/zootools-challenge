@@ -7,7 +7,7 @@ import MainSideBar from "../components/MainSideBar";
 import DashboardPage from "../components/DashboardPage";
 import CampaignsPage from "../components/CampaignsPage";
 
-const StyledAppRoot = styled.div`
+const Root = styled.div`
   display: flex;
   flex-direction: row;
   height: 100vh;
@@ -18,11 +18,11 @@ export default function App() {
   const sidebar = useMemo(() => <MainSideBar />, []);
 
   return (
-    <StyledAppRoot>
+    <Root>
       {sidebar}
 
       {pathname === "/" && <DashboardPage />}
       {pathname === "/campaigns" && <CampaignsPage />}
-    </StyledAppRoot>
+    </Root>
   );
 }

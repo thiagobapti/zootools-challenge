@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useCallback, useLayoutEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import styled from "styled-components";
@@ -13,7 +13,7 @@ import {
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 import { usePathname } from "next/navigation";
-import { storage } from "../util/storage";
+import { storageKeys } from "../util/storage";
 
 const Root = styled.div`
   display: flex;
@@ -23,16 +23,16 @@ const Root = styled.div`
   position: relative;
 `;
 
-const SidebarLogo = styled(Image)`
+const Logo = styled(Image)`
   cursor: pointer;
 `;
 
-const SidebarLogoName = styled(Image)`
+const LogoName = styled(Image)`
   cursor: pointer;
   margin-left: 12px;
 `;
 
-const SidebarButton = styled.button<{ $active?: boolean; $open: boolean }>`
+const NavLink = styled.button<{ $active?: boolean; $open: boolean }>`
   width: ${(props) => (props.$open ? "200px" : "40px")};
   border: none;
   margin-bottom: 6px;
@@ -63,7 +63,7 @@ const CollapsibleContent = styled.div<{
   margin-top: 32px;
 `;
 
-const SidebarIcon = styled(FontAwesomeIcon)<{
+const NavIcon = styled(FontAwesomeIcon)<{
   $active?: boolean;
   $open: boolean;
 }>`
@@ -108,27 +108,30 @@ const MainSideBar: React.FC = () => {
   const [open, setOpen] = React.useState(true);
   const [animatedSidebar, setAnimatedSidebar] = React.useState(false);
 
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     if (typeof window === "undefined") return;
 
     const mainNavExpanded = window.sessionStorage.getItem(
-      storage.mainNav.expanded
+      storageKeys.mainNav.expanded
     );
     const mainNavTouched = window.sessionStorage.getItem(
-      storage.mainNav.touched
+      storageKeys.mainNav.touched
     );
     const initialAnimation = window.sessionStorage.getItem(
-      storage.mainNav.initialAnimation
+      storageKeys.mainNav.initialAnimation
     );
 
     if (initialAnimation && mainNavExpanded !== "true") {
       setOpen(false);
-      window.sessionStorage.setItem(storage.mainNav.expanded, "false");
+      window.sessionStorage.setItem(storageKeys.mainNav.expanded, "false");
     }
 
     if ((!mainNavExpanded || mainNavExpanded === "false") && mainNavTouched) {
       const timeoutId = window.setTimeout(() => {
-        window.sessionStorage.setItem(storage.mainNav.initialAnimation, "true");
+        window.sessionStorage.setItem(
+          storageKeys.mainNav.initialAnimation,
+          "true"
+        );
         setAnimatedSidebar(true);
         setOpen(false);
       }, 500);
@@ -137,12 +140,12 @@ const MainSideBar: React.FC = () => {
     }
   }, []);
 
-  const handleToggle = React.useCallback(() => {
+  const handleToggle = useCallback(() => {
     setAnimatedSidebar(true);
     setOpen((prevOpen) => {
       const newOpen = !prevOpen;
       window.sessionStorage.setItem(
-        storage.mainNav.expanded,
+        storageKeys.mainNav.expanded,
         newOpen.toString()
       );
       return newOpen;
@@ -150,7 +153,7 @@ const MainSideBar: React.FC = () => {
   }, []);
 
   const handleLinkClick = React.useCallback(() => {
-    window.sessionStorage.setItem(storage.mainNav.touched, "true");
+    window.sessionStorage.setItem(storageKeys.mainNav.touched, "true");
   }, []);
 
   return (
@@ -163,7 +166,7 @@ const MainSideBar: React.FC = () => {
         <ToggleIcon icon={faChevronRight} open={open} />
       </ToggleButton>
       <LogoWrapper>
-        <SidebarLogo
+        <Logo
           src={zooToolsLogoMinSvg}
           role="button"
           alt="ZooTools Logo"
@@ -172,7 +175,7 @@ const MainSideBar: React.FC = () => {
           title={open ? "Collapse sidebar" : "Expand sidebar"}
         />
         {open && (
-          <SidebarLogoName
+          <LogoName
             src={zooToolsLogoNameSvg}
             alt="ZooTools Logo"
             height={20}
@@ -183,24 +186,24 @@ const MainSideBar: React.FC = () => {
       </LogoWrapper>
       <CollapsibleContent $open={open} $animatedSidebar={animatedSidebar}>
         <Link href="/" passHref onClick={handleLinkClick}>
-          <SidebarButton $active={pathname === "/"} $open={open}>
-            <SidebarIcon
+          <NavLink $active={pathname === "/"} $open={open}>
+            <NavIcon
               icon={faChartSimple}
               $active={pathname === "/"}
               $open={open}
             />
             {open && "Dashboard"}
-          </SidebarButton>
+          </NavLink>
         </Link>
         <Link href="/campaigns" passHref onClick={handleLinkClick}>
-          <SidebarButton $active={pathname === "/campaigns"} $open={open}>
-            <SidebarIcon
+          <NavLink $active={pathname === "/campaigns"} $open={open}>
+            <NavIcon
               icon={faEnvelope}
               $active={pathname === "/campaigns"}
               $open={open}
             />
             {open && "Campaigns"}
-          </SidebarButton>
+          </NavLink>
         </Link>
       </CollapsibleContent>
     </Root>

@@ -2,13 +2,7 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 import * as Tabs from "@radix-ui/react-tabs";
 import EmailEditor from "./EmailEditor";
-import {
-  Campaign,
-  Contact,
-  ContactGroup,
-  SelectableRecipient,
-  StatusColor,
-} from "../types/general";
+import { Campaign, Contact, ContactGroup, StatusColor } from "../types/general";
 import { formatDate } from "../util/formatters";
 import { statusColors } from "../data/database";
 
@@ -178,7 +172,7 @@ const CampaignsPage: React.FC = () => {
       recipients: [],
     };
     setCurrentCampaign(newCampaign);
-    setCampaigns((prevCampaigns) => [...prevCampaigns, newCampaign]);
+    setCampaigns((prevCampaigns) => [newCampaign, ...prevCampaigns]);
   };
 
   const handleCampaignUpdate = useCallback(

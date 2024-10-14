@@ -1,4 +1,4 @@
-const storage = {
+const storageKeys = {
   mainNav: {
     touched: "mainNavTouched",
     expanded: "mainNavExpanded",
@@ -6,4 +6,4 @@ const storage = {
   },
 };
 
-export { storage };
+export { storageKeys };
