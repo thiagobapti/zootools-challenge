@@ -5,12 +5,14 @@ import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
 import { contactGroups, contacts } from "../data/database";
 import * as Separator from "@radix-ui/react-separator";
+
 import {
   ContactGroup,
   Contact,
   Campaign,
   SelectableRecipient,
 } from "../types/general";
+import RecipientDetailDialog from "./RecipientDetailDialog";
 
 const Root = styled.div`
   flex: 1;
@@ -35,7 +37,7 @@ const Message = styled.div`
 `;
 
 const Recipients = styled.div`
-  border: 1px solid #d7d7d7;
+  // border: 1px solid #d7d7d7;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: flex-end;
@@ -70,6 +72,13 @@ const RecipientPopoverLabel = styled.div`
   font-size: 12px;
 `;
 
+const RecipientTextInput = styled.input`
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+`;
+
 const EmailEditor: React.FC<{
   currentCampaign: Campaign;
   onCampaignUpdate: (updatedCampaign: Campaign) => void;
@@ -83,6 +92,10 @@ const EmailEditor: React.FC<{
   const [selectableContactGroups, setSelectableContactGroups] = useState<
     SelectableRecipient[]
   >([]);
+  // const [dialogOpen, setDialogOpen] = useState<boolean>(false);
+  const [selectedRecipient, setSelectedRecipient] = useState<
+    Contact | ContactGroup | undefined
+  >(undefined);
 
   useEffect(() => {
     setCampaign(currentCampaign);
@@ -165,6 +178,10 @@ const EmailEditor: React.FC<{
       }))
     );
     setRecipientsPopoverOpen(true);
+  }, []);
+
+  const handleRecipientDetailClose = useCallback(() => {
+    setSelectedRecipient(undefined);
   }, []);
 
   const handleInputKeyDown = useCallback(
@@ -261,6 +278,28 @@ const EmailEditor: React.FC<{
     }
   }, [campaign, onCampaignUpdate]);
 
+  const handleRecipientSelection = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setSelectedRecipient(recipient);
+    },
+    []
+  );
+
+  const handleRecipientRemove = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setCampaign((prevCampaign) => {
+        if (!prevCampaign) return prevCampaign;
+        const updatedCampaign = {
+          ...prevCampaign,
+          recipients: prevCampaign.recipients.filter((r) => r !== recipient),
+        };
+        setSelectedRecipient(undefined);
+        return updatedCampaign;
+      });
+    },
+    []
+  );
+
   return (
     <Root>
       <Header>New Message</Header>
@@ -271,19 +310,21 @@ const EmailEditor: React.FC<{
             <RecipientPill
               recipient={recipient}
               key={recipient.id}
-              clickHandler={handleRecipientClick}
+              clickHandler={handleRecipientSelection}
             />
           ))}
 
-          <input
-            type="text"
-            onChange={handleRecipientsSearch}
-            onFocus={handleInputFocus}
-            onKeyDown={handleInputKeyDown}
-            onClick={handleInputFocus}
-          />
           <Popover.Root open={recipientsPopoverOpen}>
-            <Popover.Anchor />
+            <div style={{ position: "relative" }}>
+              <RecipientTextInput
+                type="text"
+                onChange={handleRecipientsSearch}
+                onFocus={handleInputFocus}
+                onKeyDown={handleInputKeyDown}
+                onClick={handleInputFocus}
+              />
+              <Popover.Anchor />
+            </div>
             <Popover.Portal>
               <PopoverContent
                 onBlur={handleInputBlur}
@@ -328,9 +369,16 @@ const EmailEditor: React.FC<{
             </Popover.Portal>
           </Popover.Root>
         </Recipients>
-        <Subject>Subject</Subject>
-        <Editor>Editor</Editor>
+        {/* <Subject>Subject</Subject>
+        <Editor>Editor</Editor> */}
       </Message>
+      {selectedRecipient && (
+        <RecipientDetailDialog
+          recipient={selectedRecipient}
+          closeHandler={handleRecipientDetailClose}
+          removeHandler={handleRecipientRemove}
+        />
+      )}
     </Root>
   );
 };

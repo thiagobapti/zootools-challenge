@@ -79,7 +79,7 @@ const RecipientPill: React.FC<{
       {isContactGroup(recipient) ? (
         <>
           <TagIcon $themeColor={recipient.themeColor} />
-          {recipient.label}
+          {recipient.label} ({recipient.contacts.length})
         </>
       ) : (
         <>

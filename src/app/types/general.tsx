@@ -1,3 +1,23 @@
+// Define a base type for common properties
+type BaseContact = {
+  id: string;
+  campaignsSent: number;
+  openRate: number;
+  clickRate: number;
+  bounceRate: number;
+};
+
+type Contact = BaseContact & {
+  name: string;
+  email: string;
+};
+
+type ContactGroup = BaseContact & {
+  label: string;
+  themeColor: string;
+  contacts: Contact[];
+};
+
 type Campaign = {
   id: string;
   subject: string;
@@ -7,20 +27,8 @@ type Campaign = {
   recipients: (Contact | ContactGroup)[];
 };
 
-type Contact = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-type ContactGroup = {
-  id: string;
-  label: string;
-  themeColor: string;
-};
-
 type ThemeColor = {
-  grey: string;
+  black: string;
   orange: string;
   red: string;
   green: string;

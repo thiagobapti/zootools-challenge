@@ -169,7 +169,7 @@ const CampaignsPage: React.FC = () => {
     <Root>
       <SideList>
         <SideListHeader>
-          Marketing Emails
+          Marketing Emails ({campaigns.length})
           <HeaderButton onClick={handleNewCampaign} title="Create new campaign">
             New
           </HeaderButton>
