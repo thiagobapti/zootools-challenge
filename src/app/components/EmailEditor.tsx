@@ -144,17 +144,28 @@ const EmailEditor: React.FC<{
   }, [currentCampaign]);
 
   useEffect(() => {
-    const existingRecipientIds = new Set(campaign?.recipients.map((r) => r.id));
+    const existingContactIds = new Set(
+      campaign?.recipients
+        .filter((r): r is Contact => (r as Contact).name !== undefined)
+        .map((r) => r.id)
+    );
+    const existingGroupIds = new Set(
+      campaign?.recipients
+        .filter(
+          (r): r is ContactGroup => (r as ContactGroup).label !== undefined
+        )
+        .map((r) => r.id)
+    );
 
     const filteredContactGroups = contactGroups.filter(
       (contactGroup) =>
-        !existingRecipientIds.has(contactGroup.id) &&
+        !existingGroupIds.has(contactGroup.id) &&
         contactGroup.label.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const filteredContacts = contacts.filter(
       (contact) =>
-        !existingRecipientIds.has(contact.id) &&
+        !existingContactIds.has(contact.id) &&
         contact.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -193,7 +204,6 @@ const EmailEditor: React.FC<{
       }))
     );
   }, []);
-  // const editor = useCreateBlockNote();
 
   const handleRecipientsSearch = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -245,9 +255,21 @@ const EmailEditor: React.FC<{
     },
     []
   );
+
+  const handleBackspace = useCallback(() => {
+    setCampaign((prevCampaign) => {
+      if (!prevCampaign || prevCampaign.recipients.length === 0)
+        return prevCampaign;
+      const updatedRecipients = prevCampaign.recipients.slice(0, -1);
+      return { ...prevCampaign, recipients: updatedRecipients };
+    });
+  }, []);
+
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
-      if (
+      if (e.key === "Backspace") {
+        handleBackspace();
+      } else if (
         e.key === "ArrowDown" ||
         e.key === "ArrowUp" ||
         e.key === "Tab" ||
@@ -358,7 +380,12 @@ const EmailEditor: React.FC<{
         setRecipientsPopoverOpen(false);
       }
     },
-    [selectableContactGroups, selectableContacts, handleRecipientClick]
+    [
+      selectableContactGroups,
+      selectableContacts,
+      handleRecipientClick,
+      handleBackspace,
+    ]
   );
 
   useEffect(() => {
@@ -460,7 +487,9 @@ const EmailEditor: React.FC<{
           {campaign?.recipients.map((recipient) => (
             <RecipientPill
               recipient={recipient}
-              key={recipient.id}
+              key={`${
+                (recipient as Contact).name ? "contact" : "contact-group"
+              }-${(recipient as Contact).id}`}
               clickHandler={handleRecipientSelection}
               title="Click to see details"
             />
