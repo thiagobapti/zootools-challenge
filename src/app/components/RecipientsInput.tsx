@@ -3,13 +3,13 @@ import styled from "styled-components";
 import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
 import { Contact, ContactGroup, SelectableRecipient } from "../types/general";
-import RecipientDetailDialog from "./RecipientDetailDialog";
 import { contactGroups, contacts } from "../data/database";
 
 const Root = styled.div`
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
+  min-height: 30px;
 `;
 
 const Label = styled.span`
@@ -58,11 +58,13 @@ const InputWrapper = styled.div`
 interface RecipientsInputProps {
   recipients: (Contact | ContactGroup)[];
   updateRecipients: (newRecipients: (Contact | ContactGroup)[]) => void;
+  recipientSelectionHandler: (recipient: Contact | ContactGroup) => void;
 }
 
 const RecipientsInput: React.FC<RecipientsInputProps> = ({
   recipients,
   updateRecipients,
+  recipientSelectionHandler,
 }) => {
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -77,9 +79,6 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
   const [selectableContactGroups, setSelectableContactGroups] = useState<
     SelectableRecipient[]
   >([]);
-  const [selectedRecipient, setSelectedRecipient] = useState<
-    Contact | ContactGroup | undefined
-  >(undefined);
 
   useEffect(() => {
     setCampaignRecipients(recipients);
@@ -155,11 +154,9 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
   );
 
   const handleBackspace = useCallback(() => {
-    setCampaignRecipients((prevCampaignRecipients) => {
-      const updatedRecipients = prevCampaignRecipients.slice(0, -1);
-      return updatedRecipients;
-    });
-  }, []);
+    const updatedRecipients = campaignRecipients.slice(0, -1);
+    updateRecipients(updatedRecipients);
+  }, [updateRecipients, campaignRecipients]);
 
   //TODO
   const handleKeyDown = useCallback(
@@ -348,32 +345,17 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
     setRecipientsPopoverOpen(true);
   }, []);
 
-  const handleRecipientDetailClose = useCallback(() => {
-    setSelectedRecipient(undefined);
-  }, []);
-
   const handleRootClick = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.focus();
     }
-    setRecipientsPopoverOpen(true);
   }, []);
 
-  const handleSelection = useCallback((recipient: Contact | ContactGroup) => {
-    setSelectedRecipient(recipient);
-  }, []);
-
-  const handleRecipientRemove = useCallback(
+  const handleSelection = useCallback(
     (recipient: Contact | ContactGroup) => {
-      setCampaignRecipients((prevCampaignRecipients) => {
-        const updatedRecipients = prevCampaignRecipients.filter(
-          (r) => r !== recipient
-        );
-        return updatedRecipients;
-      });
-      setSelectedRecipient(undefined);
+      recipientSelectionHandler(recipient);
     },
-    [setCampaignRecipients]
+    [recipientSelectionHandler]
   );
 
   return (
@@ -450,13 +432,6 @@ const RecipientsInput: React.FC<RecipientsInputProps> = ({
           </PopoverContent>
         </Popover.Portal>
       </Popover.Root>
-      {selectedRecipient && (
-        <RecipientDetailDialog
-          recipient={selectedRecipient}
-          closeHandler={handleRecipientDetailClose}
-          removeHandler={handleRecipientRemove}
-        />
-      )}
     </Root>
   );
 };

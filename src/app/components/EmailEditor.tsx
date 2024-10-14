@@ -19,6 +19,7 @@ import { EditorVariable } from "./EditorVariable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import RecipientsInput from "./RecipientsInput";
+import RecipientDetailDialog from "./RecipientDetailDialog";
 
 const Root = styled.div`
   flex: 1;
@@ -44,10 +45,24 @@ const Message = styled.div`
 
 const Subject = styled.div`
   margin-top: 8px;
+  display: flex;
+  flex-direction: row;
+`;
+
+const SubjectInput = styled.input`
+  border: none;
+  outline: none;
+  flex: 1;
+`;
+
+const Label = styled.span`
+  font-weight: 600;
+  margin-right: 8px;
+  font-size: 14px;
 `;
 
 const Editor = styled.div`
-  margin-top: 8px;
+  margin-top: 20px;
   flex: 1;
 `;
 
@@ -76,6 +91,9 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
       },
     ],
   });
+  const [selectedRecipient, setSelectedRecipient] = useState<
+    Contact | ContactGroup | undefined
+  >(undefined);
 
   useEffect(() => {
     setCampaign(currentCampaign);
@@ -131,6 +149,31 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
     []
   );
 
+  const handleRecipientDetailClose = useCallback(() => {
+    setSelectedRecipient(undefined);
+  }, []);
+
+  const handleRecipientRemove = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setCampaign((prevCampaign) => {
+        if (!prevCampaign) return prevCampaign;
+        const updatedRecipients = prevCampaign.recipients.filter(
+          (r) => r !== recipient
+        );
+        return { ...prevCampaign, recipients: updatedRecipients };
+      });
+      setSelectedRecipient(undefined);
+    },
+    []
+  );
+
+  const handleRecipientSelection = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setSelectedRecipient(recipient);
+    },
+    []
+  );
+
   return (
     <Root>
       <Header>New Message</Header>
@@ -138,10 +181,11 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
         <RecipientsInput
           recipients={campaign?.recipients || []}
           updateRecipients={updateRecipients}
+          recipientSelectionHandler={handleRecipientSelection}
         />
         <Subject>
-          Subject:
-          <input
+          <Label>Subject:</Label>
+          <SubjectInput
             type="text"
             value={campaign?.subject || ""}
             onChange={handleSubjectChange}
@@ -158,6 +202,13 @@ const EmailEditor: React.FC<EmailEditorProps> = ({
           </BlockNoteView>
         </Editor>
       </Message>
+      {selectedRecipient && (
+        <RecipientDetailDialog
+          recipient={selectedRecipient}
+          closeHandler={handleRecipientDetailClose}
+          removeHandler={handleRecipientRemove}
+        />
+      )}
     </Root>
   );
 };
