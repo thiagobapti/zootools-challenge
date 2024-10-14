@@ -205,11 +205,7 @@ const RecipientDetailDialog: React.FC<{
             </Label>
             <ContactList>
               {recipient.contacts.map((contact) => (
-                <RecipientPill
-                  recipient={contact}
-                  key={contact.id}
-                  clickHandler={() => {}}
-                />
+                <RecipientPill recipient={contact} key={contact.id} />
               ))}
             </ContactList>
             <Label $marginTop="22px">Statistics</Label>
@@ -230,11 +226,7 @@ const RecipientDetailDialog: React.FC<{
                 <Label $marginTop="22px">Groups ({groups.length})</Label>
                 <div>
                   {groups.map((group) => (
-                    <RecipientPill
-                      key={group.id}
-                      recipient={group}
-                      clickHandler={() => {}}
-                    />
+                    <RecipientPill key={group.id} recipient={group} />
                   ))}
                 </div>
               </div>

@@ -5,6 +5,8 @@ import RecipientPill from "./RecipientPill";
 import * as Popover from "@radix-ui/react-popover";
 import { contactGroups, contacts } from "../data/database";
 import * as Separator from "@radix-ui/react-separator";
+import "@blocknote/core/fonts/inter.css";
+import "@blocknote/mantine/style.css";
 
 import {
   ContactGroup,
@@ -13,6 +15,8 @@ import {
   SelectableRecipient,
 } from "../types/general";
 import RecipientDetailDialog from "./RecipientDetailDialog";
+import { useCreateBlockNote } from "@blocknote/react";
+import { BlockNoteView } from "@blocknote/mantine";
 
 const Root = styled.div`
   flex: 1;
@@ -45,12 +49,12 @@ const Recipients = styled.div`
 
 const Subject = styled.div`
   margin-top: 8px;
-  border: 1px solid #d7d7d7;
+  // border: 1px solid #d7d7d7;
 `;
 
 const Editor = styled.div`
   margin-top: 8px;
-  border: 1px solid #d7d7d7;
+  // border: 1px solid #d7d7d7;
   flex: 1;
 `;
 
@@ -83,7 +87,11 @@ const EmailEditor: React.FC<{
   currentCampaign: Campaign;
   onCampaignUpdate: (updatedCampaign: Campaign) => void;
 }> = ({ currentCampaign, onCampaignUpdate }) => {
-  const [campaign, setCampaign] = useState<Campaign>();
+  const editor = useCreateBlockNote();
+  const [campaign, setCampaign] = useState<Campaign>({
+    ...currentCampaign,
+    subject: currentCampaign.subject || "", // Default to an empty string
+  });
   const [recipientsPopoverOpen, setRecipientsPopoverOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectableContacts, setSelectableContacts] = useState<
@@ -98,8 +106,50 @@ const EmailEditor: React.FC<{
   >(undefined);
 
   useEffect(() => {
-    setCampaign(currentCampaign);
+    setCampaign({
+      ...currentCampaign,
+      subject: currentCampaign.subject || "", // Ensure subject is always defined
+    });
   }, [currentCampaign]);
+
+  useEffect(() => {
+    const existingRecipientIds = new Set(campaign?.recipients.map((r) => r.id));
+
+    const filteredContactGroups = contactGroups.filter(
+      (contactGroup) =>
+        !existingRecipientIds.has(contactGroup.id) &&
+        contactGroup.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const filteredContacts = contacts.filter(
+      (contact) =>
+        !existingRecipientIds.has(contact.id) &&
+        contact.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setSelectableContactGroups(
+      filteredContactGroups.map((group, index) => ({
+        selected: index === 0,
+        recipient: group,
+      }))
+    );
+
+    if (filteredContactGroups.length === 0) {
+      setSelectableContacts(
+        filteredContacts.map((contact, index) => ({
+          selected: index === 0,
+          recipient: contact,
+        }))
+      );
+    } else {
+      setSelectableContacts(
+        filteredContacts.map((contact) => ({
+          selected: false,
+          recipient: contact,
+        }))
+      );
+    }
+  }, [searchTerm, campaign]);
 
   useEffect(() => {
     setSelectableContacts(
@@ -131,39 +181,6 @@ const EmailEditor: React.FC<{
     []
   );
 
-  useEffect(() => {
-    const filteredContactGroups = contactGroups.filter(
-      (contactGroup: ContactGroup) =>
-        contactGroup.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const filteredContacts = contacts.filter((contact: Contact) =>
-      contact.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setSelectableContactGroups(
-      filteredContactGroups.map((group, index) => ({
-        selected: index === 0,
-        recipient: group,
-      }))
-    );
-
-    if (filteredContactGroups.length === 0) {
-      setSelectableContacts(
-        filteredContacts.map((contact, index) => ({
-          selected: index === 0,
-          recipient: contact,
-        }))
-      );
-    } else {
-      setSelectableContacts(
-        filteredContacts.map((contact) => ({
-          selected: false,
-          recipient: contact,
-        }))
-      );
-    }
-  }, [searchTerm]);
-
   const handleInputFocus = useCallback(() => {
     setSelectableContactGroups((prevGroups) =>
       prevGroups.map((group, index) => ({
@@ -184,6 +201,19 @@ const EmailEditor: React.FC<{
     setSelectedRecipient(undefined);
   }, []);
 
+  const handleRecipientClick = useCallback(
+    (recipient: Contact | ContactGroup) => {
+      setCampaign((prevCampaign) => {
+        if (!prevCampaign) return prevCampaign;
+        const updatedCampaign = {
+          ...prevCampaign,
+          recipients: [...prevCampaign.recipients, recipient],
+        };
+        return updatedCampaign;
+      });
+    },
+    []
+  );
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (
@@ -251,25 +281,53 @@ const EmailEditor: React.FC<{
             return updatedContacts;
           });
         }
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const selectedGroupIndex = selectableContactGroups.findIndex(
+          (r) => r.selected
+        );
+        const selectedContactIndex = selectableContacts.findIndex(
+          (r) => r.selected
+        );
+
+        if (selectedGroupIndex !== -1) {
+          handleRecipientClick(
+            selectableContactGroups[selectedGroupIndex].recipient
+          );
+          setSelectableContactGroups((prevGroups) => {
+            const updatedGroups = [...prevGroups];
+            updatedGroups[selectedGroupIndex].selected = false;
+            const nextIndex = selectedGroupIndex + 1;
+            if (nextIndex < prevGroups.length) {
+              updatedGroups[nextIndex].selected = true;
+            } else if (selectableContacts.length > 0) {
+              setSelectableContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+                updatedContacts[0].selected = true;
+                return updatedContacts;
+              });
+            }
+            return updatedGroups;
+          });
+        } else if (selectedContactIndex !== -1) {
+          handleRecipientClick(
+            selectableContacts[selectedContactIndex].recipient
+          );
+          setSelectableContacts((prevContacts) => {
+            const updatedContacts = [...prevContacts];
+            updatedContacts[selectedContactIndex].selected = false;
+            const nextIndex = selectedContactIndex + 1;
+            if (nextIndex < prevContacts.length) {
+              updatedContacts[nextIndex].selected = true;
+            }
+            return updatedContacts;
+          });
+        }
       } else if (e.key === "Escape") {
         setRecipientsPopoverOpen(false);
       }
     },
-    [selectableContactGroups, selectableContacts]
-  );
-
-  const handleRecipientClick = useCallback(
-    (recipient: Contact | ContactGroup) => {
-      setCampaign((prevCampaign) => {
-        if (!prevCampaign) return prevCampaign;
-        const updatedCampaign = {
-          ...prevCampaign,
-          recipients: [...prevCampaign.recipients, recipient],
-        };
-        return updatedCampaign;
-      });
-    },
-    []
+    [selectableContactGroups, selectableContacts, handleRecipientClick]
   );
 
   useEffect(() => {
@@ -300,6 +358,16 @@ const EmailEditor: React.FC<{
     []
   );
 
+  const handleSubjectChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setCampaign((prevCampaign) => {
+        if (!prevCampaign) return prevCampaign;
+        return { ...prevCampaign, subject: e.target.value };
+      });
+    },
+    []
+  );
+
   return (
     <Root>
       <Header>New Message</Header>
@@ -311,6 +379,7 @@ const EmailEditor: React.FC<{
               recipient={recipient}
               key={recipient.id}
               clickHandler={handleRecipientSelection}
+              title="Click to see details"
             />
           ))}
 
@@ -342,6 +411,7 @@ const EmailEditor: React.FC<{
                         (contactGroup.recipient as ContactGroup).id
                       }`}
                       clickHandler={handleRecipientClick}
+                      title="Click to add to recipients"
                     />
                   )
                 )}
@@ -361,6 +431,7 @@ const EmailEditor: React.FC<{
                     selected={contact.selected}
                     key={`contact-${(contact.recipient as Contact).id}`}
                     clickHandler={handleRecipientClick}
+                    title="Click to add to recipients"
                   />
                 ))}
                 {/* <Popover.Close /> */}
@@ -369,8 +440,17 @@ const EmailEditor: React.FC<{
             </Popover.Portal>
           </Popover.Root>
         </Recipients>
-        {/* <Subject>Subject</Subject>
-        <Editor>Editor</Editor> */}
+        <Subject>
+          Subject:
+          <input
+            type="text"
+            value={campaign?.subject}
+            onChange={handleSubjectChange}
+          />
+        </Subject>
+        <Editor>
+          <BlockNoteView editor={editor} theme="light" />
+        </Editor>
       </Message>
       {selectedRecipient && (
         <RecipientDetailDialog

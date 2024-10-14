@@ -1,10 +1,10 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import Image from "next/image";
 import React, { useCallback } from "react";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Contact, ContactGroup } from "../types/general";
 
-const Root = styled.button<{ $themeColor?: string }>`
+const Root = styled.button<{ $themeColor?: string; $clickable?: boolean }>`
   border: 1px solid
     ${(props) =>
       props.$themeColor ? `rgba(${props.$themeColor}, 0.3)` : "#e4e4e7"};
@@ -18,6 +18,7 @@ const Root = styled.button<{ $themeColor?: string }>`
   flex-direction: row;
   margin-top: 6px;
   margin-right: 6px;
+  cursor: ${(props) => (props.$clickable ? "pointer" : "default")};
   background: ${(props) =>
     props.$themeColor
       ? `linear-gradient(to right, 
@@ -58,8 +59,9 @@ const TagIcon = styled.div<{ $themeColor?: string }>`
 const RecipientPill: React.FC<{
   recipient: Contact | ContactGroup;
   selected?: boolean;
-  clickHandler: (recipient: Contact | ContactGroup) => void;
-}> = ({ recipient, selected, clickHandler }) => {
+  title?: string;
+  clickHandler?: (recipient: Contact | ContactGroup) => void;
+}> = ({ recipient, selected, clickHandler, title }) => {
   const isContactGroup = (
     recipient: Contact | ContactGroup
   ): recipient is ContactGroup => {
@@ -67,14 +69,16 @@ const RecipientPill: React.FC<{
   };
 
   const handleClick = useCallback(() => {
-    clickHandler(recipient);
+    clickHandler?.(recipient);
   }, [clickHandler, recipient]);
 
   return (
     <Root
       data-selected={selected}
+      title={title}
       $themeColor={isContactGroup(recipient) ? recipient.themeColor : undefined}
       onClick={handleClick}
+      $clickable={clickHandler !== undefined}
     >
       {isContactGroup(recipient) ? (
         <>
