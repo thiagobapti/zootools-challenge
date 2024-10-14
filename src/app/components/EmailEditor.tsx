@@ -446,7 +446,6 @@ const EmailEditor: React.FC<{
     //   </mj-body>
     // </mjml>`);
     //     console.log(html);
-    editor.openSuggestionMenu("/");
   }, [editor]);
 
   return (

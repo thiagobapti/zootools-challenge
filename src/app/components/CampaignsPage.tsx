@@ -2,7 +2,15 @@ import React, { useCallback } from "react";
 import styled from "styled-components";
 import * as Tabs from "@radix-ui/react-tabs";
 import EmailEditor from "./EmailEditor";
-import { Campaign } from "../types/general";
+import {
+  Campaign,
+  Contact,
+  ContactGroup,
+  SelectableRecipient,
+  StatusColor,
+} from "../types/general";
+import { formatDate } from "../util/formatters";
+import { statusColors } from "../data/database";
 
 const Root = styled.div`
   width: 100%;
@@ -133,6 +141,25 @@ const CampaignItem = styled.div`
   border-radius: 6px;
   background-color: #f1f1f1;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.3;
+
+  & + & {
+    margin-top: 6px;
+  }
+`;
+
+const CampaignStatusBadge = styled.div<{ $status: keyof StatusColor }>`
+  background-color: ${({ $status }) => statusColors[$status]};
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #000;
 `;
 
 const CampaignsPage: React.FC = () => {
@@ -165,6 +192,20 @@ const CampaignsPage: React.FC = () => {
     [setCampaigns]
   );
 
+  const getUniqueRecipientCount = (recipients: (Contact | ContactGroup)[]) => {
+    const uniqueRecipients = new Set<string>();
+    recipients.forEach((recipient) => {
+      if ("email" in recipient) {
+        uniqueRecipients.add(recipient.email);
+      } else if ("contacts" in recipient) {
+        recipient.contacts.forEach((contact) => {
+          uniqueRecipients.add(contact.email);
+        });
+      }
+    });
+    return uniqueRecipients.size;
+  };
+
   return (
     <Root>
       <SideList>
@@ -187,17 +228,15 @@ const CampaignsPage: React.FC = () => {
           )}
           {campaigns.map((campaign) => (
             <CampaignItem key={campaign.id}>
-              Subject: {campaign.subject}
-              <br />
-              Status: {campaign.status}
-              <br />
-              Created At: {campaign.createdAt}
-              <br />
-              Body: {campaign.body}
-              <br />
-              {campaign.recipients.map((recipient) =>
-                "email" in recipient ? recipient.email : recipient.label
-              )}
+              <CampaignStatusBadge $status={campaign.status}>
+                {campaign.status}
+              </CampaignStatusBadge>
+              <strong>{campaign.subject || "Untitled"}</strong>
+              <div>{campaign.body || "No body"}</div>
+              <div>Created At: {formatDate(campaign.createdAt)}</div>
+              <div>
+                {getUniqueRecipientCount(campaign.recipients)} Recipients
+              </div>
             </CampaignItem>
           ))}
         </CampaignList>

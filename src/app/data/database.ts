@@ -3,6 +3,7 @@ import {
   Contact,
   ThemeColor,
   EditorVariable,
+  StatusColor,
 } from "../types/general";
 
 const editorVariables: EditorVariable[] = [
@@ -128,6 +129,12 @@ const themeColors: ThemeColor = {
   blue: "6, 182, 212",
 };
 
+const statusColors: StatusColor = {
+  draft: "#ffeb5c",
+  scheduled: "blue",
+  sent: "green",
+};
+
 const contactGroups: ContactGroup[] = [
   {
     id: "0",
@@ -191,4 +198,4 @@ const contactGroups: ContactGroup[] = [
   },
 ];
 
-export { contacts, contactGroups, editorVariables };
+export { contacts, contactGroups, editorVariables, statusColors };

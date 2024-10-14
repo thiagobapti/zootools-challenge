@@ -21,7 +21,7 @@ type ContactGroup = BaseContact & {
 type Campaign = {
   id: string;
   subject: string;
-  status: "draft" | "scheduled" | "sent";
+  status: keyof StatusColor;
   createdAt: string;
   body: string;
   recipients: (Contact | ContactGroup)[];
@@ -34,6 +34,12 @@ type ThemeColor = {
   green: string;
   yellow: string;
   blue: string;
+};
+
+type StatusColor = {
+  draft: string;
+  scheduled: string;
+  sent: string;
 };
 
 type SelectableRecipient = {
@@ -55,4 +61,5 @@ export type {
   EditorVariable,
   SelectableRecipient,
   ThemeColor,
+  StatusColor,
 };
